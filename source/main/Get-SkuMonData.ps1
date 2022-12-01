@@ -163,16 +163,6 @@ Function Get-SkuMonData {
                 $html += '<td><b>' + $('{0:N0}' -f $item.Available) + ' available</b><br>' + $('{0:N0}' -f $item.Assigned) + ' assigned out of ' + $('{0:N0}' -f $item.Total) #+ ' total'
 
                 $html += '<td class="' + ($item.ThresholdStatus) + '" width="5px"></td></tr>'
-
-                # if (($item.ThresholdStatus) -eq 'Warning') {
-                #     $html += '<td class="Warning" width="5px"></td></tr>'
-                # }
-                # if (($item.ThresholdStatus) -eq 'Normal') {
-                #     $html += '<td class="Normal" width="5px"></td></tr>'
-                # }
-                # if (($item.ThresholdStatus) -eq 'Ignore') {
-                #     $html += '<td class="Ignore" width="5px"></td></tr>'
-                # }
             }
 
             $html += '<tr><td class="head" colspan="4"></td></tr>'
