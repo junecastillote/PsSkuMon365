@@ -6,7 +6,7 @@ Function Get-SkuMonData {
 
         [parameter()]
         [ValidateSet('PSObject', 'Html', 'Email')]
-        [string[]]
+        [string]
         $OutputType = 'PSObject',
 
         [parameter()]
@@ -23,7 +23,7 @@ Function Get-SkuMonData {
     )
     begin {
         # If OutputType is Email, set the requirements.
-        if ($OutputType -contains 'Email') {
+        if ($OutputType -eq 'Email') {
             if (!$From) {
                 Say 'The From email address is required.'
                 return $null
@@ -117,7 +117,7 @@ Function Get-SkuMonData {
 
     end {
 
-        if ($OutputType -contains 'Html' -or $OutputType -contains 'Email') {
+        if ($OutputType -eq 'Html' -or $OutputType -eq 'Email') {
             $Organization = Get-MgOrganization
             $ResourceFolder = [System.IO.Path]::Combine((Split-Path ($ThisModule.Path) -Parent), 'resource')
             $css = Get-Content $resourceFolder\style.css -Raw
@@ -185,18 +185,17 @@ Function Get-SkuMonData {
             $html += '</body>'
             $html += '</html>'
             $html = ($html -join "`n")
-            # return $html
         }
 
-        if ($OutputType -contains 'Html') {
+        if ($OutputType -eq 'Html') {
             $html
         }
 
-        if ($OutputType -contains 'PSObject') {
+        if ($OutputType -eq 'PSObject') {
             $skuCollection
         }
 
-        if ($OutputType -contains 'Email') {
+        if ($OutputType -eq 'Email') {
             $ResourceFolder = [System.IO.Path]::Combine((Split-Path ($ThisModule.Path) -Parent), 'resource')
             $logo = $([convert]::ToBase64String([System.IO.File]::ReadAllBytes("$resourceFolder\logo.png")))
             $Subject = "m365 License Availability @ [$($Organization.DisplayName)]"
@@ -259,7 +258,6 @@ Function Get-SkuMonData {
             catch {
                 SayError "Send email failed: $($_.Exception.Message)"
             }
-
         }
     }
 }
