@@ -33,17 +33,22 @@ Function Send-SkuMonReport {
         return $jsonRecipients
     }
 
+    if (!$To -and !$Cc -and !$Bcc) {
+        SayError 'There must be at least 1 recipient.'
+        retrn $null
+    }
 
     $ThisFunction = ($MyInvocation.MyCommand)
     $ThisModule = Get-Module ($ThisFunction.Source)
     $ResourceFolder = [System.IO.Path]::Combine((Split-Path ($ThisModule.Path) -Parent), 'resource')
+    $logo = $([convert]::ToBase64String([System.IO.File]::ReadAllBytes("$resourceFolder\logo.png")))
 
-    if ($PSVersionTable.PSEdition -eq 'Core') {
-        $logo = $([convert]::ToBase64String((Get-Content $resourceFolder\logo.png -AsByteStream)))
-    }
-    else {
-        $logo = $([convert]::ToBase64String((Get-Content $resourceFolder\logo.png -Raw -Encoding byte)))
-    }
+    # if ($PSVersionTable.PSEdition -eq 'Core') {
+    #     $logo = $([convert]::ToBase64String((Get-Content $resourceFolder\logo.png -AsByteStream)))
+    # }
+    # else {
+    #     $logo = $([convert]::ToBase64String((Get-Content $resourceFolder\logo.png -Raw -Encoding byte)))
+    # }
 
     if (!$Subject) {
         $Subject = "m365 License Availability @ [$(($Body | Select-String -Pattern '(?<=\<b\>).+?(?=\<\/b\>)' -AllMatches).Matches[0].Value)]"
