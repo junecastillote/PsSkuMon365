@@ -1,21 +1,67 @@
 Function Get-SkuMonData {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory, ValueFromPipeline)]
-        [ValidateNotNullOrEmpty()]
-        $SkuObject,
+        [Parameter(ValueFromPipeline)]
+        $SkuMonList,
 
         [parameter()]
-        [ValidateSet('Object', 'HTML')]
-        $OutputType = 'Object'
+        [ValidateSet('PSObject', 'Html', 'Email')]
+        [string[]]
+        $OutputType = 'PSObject',
+
+        [parameter()]
+        [string]$From,
+
+        [parameter()]
+        [string[]]$To,
+
+        [parameter()]
+        [string[]]$CC,
+
+        [parameter()]
+        [string[]]$BCC
     )
     begin {
+        # If OutputType is Email, set the requirements.
+        if ($OutputType -contains 'Email') {
+            if (!$From) {
+                Say 'The From email address is required.'
+                return $null
+            }
+
+            if (!$To -and !$Cc -and !$Bcc) {
+                Say 'There must be at least 1 recipient email address.'
+                return $null
+            }
+        }
+
+        # JSON email address conversion
+        Function ConvertRecipientsToJSON {
+            param(
+                [Parameter(Mandatory)]
+                [string[]]
+                $Recipients
+            )
+            $jsonRecipients = @()
+            $Recipients | ForEach-Object {
+                $jsonRecipients += @{EmailAddress = @{Address = $_ } }
+            }
+            return $jsonRecipients
+        }
+
+        $ThisFunction = ($MyInvocation.MyCommand)
+        $ThisModule = Get-Module ($ThisFunction.Source)
+
+        if (!$SkuMonList) {
+            $SkuMonList = New-SkuMonList
+        }
+
         $subscribedSku = Get-MgSubscribedSku -ErrorAction Stop | Where-Object { $_.AppliesTo -eq 'User' }
         [System.Collections.ArrayList]$skuCollection = @()
     }
 
     process {
-        foreach ($item in $SkuObject | Where-Object { $_.IncludeInReport -eq $true }) {
+        foreach ($item in $SkuMonList | Where-Object { $_.IncludeInReport -eq $true }) {
             $sku = $subscribedSku | Where-Object { $_.SkuPartNumber -eq $item.SkuPartNumber }
 
             $AvailableUnits = (($sku.prepaidUnits.Enabled + $sku.prepaidUnits.Warning) - $sku.ConsumedUnits)
@@ -71,12 +117,8 @@ Function Get-SkuMonData {
 
     end {
 
-        if ($OutputType -eq 'HTML') {
-
-            $ThisFunction = ($MyInvocation.MyCommand)
-            $ThisModule = Get-Module ($ThisFunction.Source)
-
-            # $resourceFolder = ((Split-Path -Path (Resolve-Path $PSScriptRoot).Path -Parent) + '\Resource')
+        if ($OutputType -contains 'Html' -or $OutputType -contains 'Email') {
+            $Organization = Get-MgOrganization
             $ResourceFolder = [System.IO.Path]::Combine((Split-Path ($ThisModule.Path) -Parent), 'resource')
             $css = Get-Content $resourceFolder\style.css -Raw
 
@@ -103,7 +145,7 @@ Function Get-SkuMonData {
             $html += '<table id="tbl">'
             $html += '<tr><td class="head"> </td></tr>'
             $html += '<tr><th class="section">Microsoft 365 Licenses</th></tr>'
-            $html += '<tr><td class="head"><b>' + $((Get-MgOrganization).DisplayName) + '</b><br>' + $today + ' ' + $tz + '</td></tr>'
+            $html += '<tr><td class="head"><b>' + $($Organization.DisplayName) + '</b><br>' + $today + ' ' + $tz + '</td></tr>'
             $html += '<tr><td class="head"> </td></tr>'
             # $html += '<tr><td class="head"> </td></tr>'
             $html += '</table>'
@@ -143,13 +185,81 @@ Function Get-SkuMonData {
             $html += '</body>'
             $html += '</html>'
             $html = ($html -join "`n")
-            # $html | Out-File $outHTML -Encoding utf8
-            return $html
+            # return $html
         }
 
-        if ($OutputType -eq 'Object') {
-            Return $skuCollection
+        if ($OutputType -contains 'Html') {
+            $html
         }
 
+        if ($OutputType -contains 'PSObject') {
+            $skuCollection
+        }
+
+        if ($OutputType -contains 'Email') {
+            $ResourceFolder = [System.IO.Path]::Combine((Split-Path ($ThisModule.Path) -Parent), 'resource')
+            $logo = $([convert]::ToBase64String([System.IO.File]::ReadAllBytes("$resourceFolder\logo.png")))
+            $Subject = "m365 License Availability @ [$($Organization.DisplayName)]"
+            $mailBody = @{
+                message = @{
+                    subject                = $Subject
+                    body                   = @{
+                        content     = $($html.Replace("data:image/png;base64,$logo", "cid:logo"))
+                        contentType = "HTML"
+                    }
+                    internetMessageHeaders = @(
+                        @{
+                            name  = "X-Mailer"
+                            value = "PsGraphMail by june.castillote@gmail.com"
+                        }
+                    )
+                    attachments            = @(
+                        @{
+                            "@odata.type"  = "#microsoft.graph.fileAttachment"
+                            "contentID"    = "logo"
+                            "name"         = "logo"
+                            "IsInline"     = $true
+                            "contentType"  = "image/png"
+                            "contentBytes" = $logo
+                        }
+                    )
+                }
+            }
+
+            # To recipients
+            if ($To) {
+                $mailBody.message += @{
+                    toRecipients = @(
+                        $(ConvertRecipientsToJSON $To)
+                    )
+                }
+            }
+
+            # Cc recipients
+            if ($CC) {
+                $mailBody.message += @{
+                    ccRecipients = @(
+                        $(ConvertRecipientsToJSON $CC)
+                    )
+                }
+            }
+
+            # BCC recipients
+            if ($BCC) {
+                $mailBody.message += @{
+                    bccRecipients = @(
+                        $(ConvertRecipientsToJSON $BCC)
+                    )
+                }
+            }
+
+            try {
+                Send-MgUserMail -UserId $From -BodyParameter $mailBody
+            }
+            catch {
+                SayError "Send email failed: $($_.Exception.Message)"
+            }
+
+        }
     }
 }
