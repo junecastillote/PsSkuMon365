@@ -152,7 +152,7 @@ Function Get-SkuMonData {
             $html += '<tr><td class="head" colspan="4"></td></tr>'
             $html += '</table>'
             $html += '<table id="legend">'
-            $html += '<tr><td class="green" width="60px">Normal</td><td class="red" width="60px">Warning</td><td class="gray" width="60px">Ignore</td></tr>'
+            $html += '<tr><td class="Normal" width="60px">Normal</td><td class="Warning" width="60px">Warning</td><td class="Ignore" width="60px">Ignore</td></tr>'
             $html += '</table>'
             $html += '<table id="tbl">'
             $html += '<tr><td width="420px" colspan="2">Name</th><td width="170px">Quantity</td><td width="5px"></td></tr>'
@@ -162,22 +162,24 @@ Function Get-SkuMonData {
                 $html += '<th>' + $item.SkuName + '</th>'
                 $html += '<td><b>' + $('{0:N0}' -f $item.Available) + ' available</b><br>' + $('{0:N0}' -f $item.Assigned) + ' assigned out of ' + $('{0:N0}' -f $item.Total) #+ ' total'
 
-                if (($item.ThresholdStatus) -eq 'Warning') {
-                    $html += '<td class="red" width="5px"></td></tr>'
-                }
-                if (($item.ThresholdStatus) -eq 'Normal') {
-                    $html += '<td class="green" width="5px"></td></tr>'
-                }
-                if (($item.ThresholdStatus) -eq 'Ignore') {
-                    $html += '<td class="gray" width="5px"></td></tr>'
-                }
+                $html += '<td class="' + ($item.ThresholdStatus) + '" width="5px"></td></tr>'
+
+                # if (($item.ThresholdStatus) -eq 'Warning') {
+                #     $html += '<td class="Warning" width="5px"></td></tr>'
+                # }
+                # if (($item.ThresholdStatus) -eq 'Normal') {
+                #     $html += '<td class="Normal" width="5px"></td></tr>'
+                # }
+                # if (($item.ThresholdStatus) -eq 'Ignore') {
+                #     $html += '<td class="Ignore" width="5px"></td></tr>'
+                # }
             }
 
             $html += '<tr><td class="head" colspan="4"></td></tr>'
             $html += '</table>'
 
             $html += '<table id="legend">'
-            $html += '<tr><td class="green" width="60px">Normal</td><td class="red" width="60px">Warning</td><td class="gray" width="60px">Ignore</td></tr>'
+            $html += '<tr><td class="Normal" width="60px">Normal</td><td class="Warning" width="60px">Warning</td><td class="Ignore" width="60px">Ignore</td></tr>'
             $html += '</table>'
             $html += '<table id="settings">'
             $html += '<tr><td colspan="2"><a href="' + $ThisModule.ProjectURI + '">' + $ThisModule.Name + ' v' + $ThisModule.Version + '</a></td></tr>'
