@@ -198,7 +198,7 @@ Function Get-SkuMonData {
         if ($OutputType -eq 'Email') {
             $ResourceFolder = [System.IO.Path]::Combine((Split-Path ($ThisModule.Path) -Parent), 'resource')
             $logo = $([convert]::ToBase64String([System.IO.File]::ReadAllBytes("$resourceFolder\logo.png")))
-            $Subject = "m365 License Availability @ [$($Organization.DisplayName)]"
+            $Subject = "[$($Organization.DisplayName)] Microsoft 365 License Availability"
             $mailBody = @{
                 message = @{
                     subject                = $Subject
