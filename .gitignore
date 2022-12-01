@@ -3,3 +3,5 @@ test*
 names.md
 *.csv
 *.html
+*.yaml
+*.json
