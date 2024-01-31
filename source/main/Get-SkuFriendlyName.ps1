@@ -7,7 +7,7 @@ Function Get-SkuFriendlyName {
 
         [parameter()]
         [string]
-        $URL = 'https://raw.githubusercontent.com/MicrosoftDocs/azure-docs/master/articles/active-directory/enterprise-users/licensing-service-plan-reference.md',
+        $URL = 'https://raw.githubusercontent.com/MicrosoftDocs/entra-docs/main/docs/identity/users/licensing-service-plan-reference.md',
 
         [parameter()]
         [string[]]
