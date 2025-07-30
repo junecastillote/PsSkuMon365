@@ -17,11 +17,11 @@ jobs:
         shell: powershell
         run: |
           $manifest = Get-ChildItem -Path . -Filter PsSkuMon365.psd1 -Recurse | Select-Object -First 1
-          if (-not (Test-Path $manifest)) {
-              throw 'Module manifest not found.'
+          if (-not $manifest) {
+            throw 'Module manifest not found.'
           }
 
-          Publish-Module -Path (Split-Path $manifest.FullName)) `
+          Publish-Module -Path (Split-Path $manifest.FullName) `
                          -NuGetApiKey $env:PSGALLERY_API_KEY `
                          -Force
         env:
