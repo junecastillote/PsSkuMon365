@@ -5,3 +5,8 @@ names.md
 *.html
 *.yaml
 *.json
+# PowerShell module build artifacts
+*.nupkg
+*.zip
+*.psd1.old
+*.psm1.old
