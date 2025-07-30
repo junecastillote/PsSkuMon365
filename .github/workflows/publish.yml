@@ -3,37 +3,37 @@ name: Publish to PowerShell Gallery and Create GitHub Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   publish:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Publish to PowerShell Gallery
-      shell: powershell
-      run: |
-        $manifest = .\PsSkuMon365.psd1
-        if (-not (Test-Path $manifest)) {
-            throw 'Module manifest not found.'
-        }
+      - name: Publish to PowerShell Gallery
+        shell: powershell
+        run: |
+          $manifest = Get-ChildItem -Path . -Filter PsSkuMon365.psd1 -Recurse | Select-Object -First 1
+          if (-not (Test-Path $manifest)) {
+              throw 'Module manifest not found.'
+          }
 
-        Publish-Module -Path (Split-Path $manifest) `
-                       -NuGetApiKey $env:PSGALLERY_API_KEY `
-                       -Force
-      env:
-        PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+          Publish-Module -Path (Split-Path $manifest.FullName)) `
+                         -NuGetApiKey $env:PSGALLERY_API_KEY `
+                         -Force
+        env:
+          PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
 
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ github.ref_name }}
-        name: Release ${{ github.ref_name }}
-        body: |
-          ✅ PsSkuMon365 published to the PowerShell Gallery!
-          [View on PSGallery](https://www.powershellgallery.com/packages/PsSkuMon365)
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ✅ PsSkuMon365 published to the PowerShell Gallery!
+            [View on PSGallery](https://www.powershellgallery.com/packages/PsSkuMon365)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
