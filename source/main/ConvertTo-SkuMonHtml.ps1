@@ -15,7 +15,7 @@ function ConvertTo-SkuMonHtml {
         $BarHeight = 10
 
         $barColors = @{
-            'Normal'  = '#8A5A00' # Your warmer muted tone
+            'Normal'  = '#6B8F71' # Your warmer muted tone
             'Warning' = '#C0392B' # Red for warning
             'Ignore'  = '#7F8C8D' # Gray for ignore
         }
@@ -84,8 +84,8 @@ function ConvertTo-SkuMonHtml {
         # Legend
         $html += '<table id="legend">'
         $html += '<tr>'
-        $html += '<td style="background-color: ' + $barColors['Normal'] + '; color: #fff;" width="60px">Normal</td>'
         $html += '<td style="background-color: ' + $barColors['Warning'] + '; color: #fff;" width="60px">Warning</td>'
+        $html += '<td style="background-color: ' + $barColors['Normal'] + '; color: #fff;" width="60px">Normal</td>'
         $html += '<td style="background-color: ' + $barColors['Ignore'] + '; color: #fff;" width="60px">Ignored</td>'
         $html += '</tr>'
         $html += '</table>'
@@ -96,10 +96,11 @@ function ConvertTo-SkuMonHtml {
         $html += '<tr>'
         $html += '<td width="420px" colspan="2">Name</td>'
         $html += '<td width="120px">Available licenses</td>'
-        $html += '<td width="190px">Assigned licenses</td>'
+        $html += '<td width="190px">&nbsp;&nbsp;Assigned licenses</td>'
         $html += '</tr>'
 
         # Data rows
+        # `Sort-Object ThresholdStatusCode, Available` ensures that items are grouped by status and then sorted by availability within each group (e.g. warnings with lowest availability at the top of the warning section).
         foreach ($item in $items | Sort-Object ThresholdStatusCode, Available) {
             $skuName = [System.Net.WebUtility]::HtmlEncode($item.SkuName)
 
@@ -181,8 +182,8 @@ function ConvertTo-SkuMonHtml {
             $assignedCell = @()
             $assignedCell += '<table width="190" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">'
             $assignedCell += '<tr>'
-            $assignedCell += '<td width="' + $BarWidth + '" valign="middle" style="width:' + $BarWidth + 'px;border-bottom:none;vertical-align:middle;">' + $barHtml + '</td>'
-            $assignedCell += '<td width="8" style="width:8px;font-size:0;line-height:0;border-bottom:none;vertical-align:middle;">&nbsp;</td>'
+            $assignedCell += '<td width="' + $BarWidth + '" valign="middle" style="width:' + $BarWidth + 'px;border-bottom:none;vertical-align:middle;padding-right:0;">' + $barHtml + '</td>'
+            # $assignedCell += '<td width="8" style="width:8px;font-size:0;line-height:0;border-bottom:none;vertical-align:middle;">&nbsp;</td>'
             $assignedCell += '<td width="' + (190 - $BarWidth - 8) + '" valign="middle" style="white-space:nowrap;border-bottom:none;vertical-align:middle;">' + $assigned + '/' + $total + '</td>'
             $assignedCell += '</tr>'
             $assignedCell += '</table>'
