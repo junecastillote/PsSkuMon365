@@ -13,6 +13,12 @@ function ConvertTo-SkuMonHtml {
         $LogoSize = 24
         $BarWidth = 100
         $BarHeight = 10
+
+        $barColors = @{
+            'Normal'  = '#8A5A00' # Your warmer muted tone
+            'Warning' = '#C0392B' # Red for warning
+            'Ignore'  = '#7F8C8D' # Gray for ignore
+        }
     }
 
     process {
@@ -27,15 +33,12 @@ function ConvertTo-SkuMonHtml {
         }
 
         # Resolve resource folder
-        # if (-not $ResourceFolder) {
         $module = Get-Module PsSkuMon365
-
         if (-not $module) {
             throw "Module 'PsSkuMon365' is not loaded. Unable to resolve the resource folder."
         }
 
         $ResourceFolder = Join-Path (Split-Path $module.Path -Parent) 'resource'
-        # }
 
         # Load CSS
         $cssPath = Join-Path $ResourceFolder 'style.css'
@@ -81,31 +84,28 @@ function ConvertTo-SkuMonHtml {
         # Legend
         $html += '<table id="legend">'
         $html += '<tr>'
-        $html += '<td class="Normal" width="60px">Normal</td>'
-        $html += '<td class="Warning" width="60px">Warning</td>'
-        $html += '<td class="Ignore" width="60px">Ignore</td>'
+        $html += '<td style="background-color: ' + $barColors['Normal'] + '; color: #fff;" width="60px">Normal</td>'
+        $html += '<td style="background-color: ' + $barColors['Warning'] + '; color: #fff;" width="60px">Warning</td>'
+        $html += '<td style="background-color: ' + $barColors['Ignore'] + '; color: #fff;" width="60px">Ignored</td>'
         $html += '</tr>'
         $html += '</table>'
 
         # Table header
         $html += '<table id="tbl">'
+        $html += '<tr><td colspan="4"></td></tr>'
         $html += '<tr>'
         $html += '<td width="420px" colspan="2">Name</td>'
         $html += '<td width="120px">Available licenses</td>'
         $html += '<td width="190px">Assigned licenses</td>'
-        $html += '<td width="5px"></td>'
         $html += '</tr>'
 
         # Data rows
         foreach ($item in $items | Sort-Object ThresholdStatus, Available -Descending) {
-
             $skuName = [System.Net.WebUtility]::HtmlEncode($item.SkuName)
 
             $available = '{0:N0}' -f $item.Available
             $assigned = '{0:N0}' -f $item.Assigned
             $total = '{0:N0}' -f $item.Total
-
-            $statusClass = [System.Net.WebUtility]::HtmlEncode($item.ThresholdStatus)
 
             # Calculate assigned-license usage ratio.
             $assignedValue = 0
@@ -145,12 +145,10 @@ function ConvertTo-SkuMonHtml {
             $emptyWidth = $BarWidth - $filledWidth
 
             # Status-based color.
-            # Normal uses your warmer muted tone.
-            $barFillColor = switch ($item.ThresholdStatus) {
-                'Warning' { '#C0392B' }
-                'Normal' { '#8A5A00' }
-                'Ignore' { '#7F8C8D' }
-                default { '#8A5A00' }
+            $barFillColor = $barColors[$item.ThresholdStatus]
+
+            if ([System.Net.WebUtility]::HtmlEncode($item.ThresholdStatus)) {
+                $barFillColor = [System.Net.WebUtility]::HtmlEncode($barFillColor)
             }
 
             $barEmptyColor = '#D9D9D9'
@@ -191,25 +189,16 @@ function ConvertTo-SkuMonHtml {
             $assignedCell = $assignedCell -join ''
 
             $html += '<tr>'
-            $html += '<td valign="middle" style="vertical-align:middle;"><img src="data:image/png;base64,' + $logoBase64 + '" width="' + $LogoSize + '" height="' + $LogoSize + '" style="display:block;" alt="" /></td>'
+            $html += '<td valign="middle" style="vertical-align:middle;" width="' + $LogoSize + '"><img src="data:image/png;base64,' + $logoBase64 + '" width="' + $LogoSize + '" height="' + $LogoSize + '" style="display:block;" alt="" /></td>'
             $html += '<td valign="middle" style="vertical-align:middle;font-weight: bold;">' + $skuName + '</td>'
             $html += '<td valign="middle" style="vertical-align:middle;">' + $available + '</td>'
             $html += '<td valign="middle">' + $assignedCell + '</td>'
-            $html += '<td class="' + $statusClass + '" width="5px" valign="middle"></td>'
+            # $html += '<td class="' + $statusClass + '" width="5px" valign="middle"></td>'
             $html += '</tr>'
         }
 
         # Footer spacer
         $html += '<tr><td class="head" colspan="5"></td></tr>'
-        $html += '</table>'
-
-        # Legend (bottom)
-        $html += '<table id="legend">'
-        $html += '<tr>'
-        $html += '<td class="Normal" width="60px">Normal</td>'
-        $html += '<td class="Warning" width="60px">Warning</td>'
-        $html += '<td class="Ignore" width="60px">Ignore</td>'
-        $html += '</tr>'
         $html += '</table>'
 
         # Footer info
