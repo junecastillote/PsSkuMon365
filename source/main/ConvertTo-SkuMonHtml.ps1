@@ -193,7 +193,6 @@ function ConvertTo-SkuMonHtml {
             $html += '<td valign="middle" style="vertical-align:middle;font-weight: bold;">' + $skuName + '</td>'
             $html += '<td valign="middle" style="vertical-align:middle;">' + $available + '</td>'
             $html += '<td valign="middle">' + $assignedCell + '</td>'
-            # $html += '<td class="' + $statusClass + '" width="5px" valign="middle"></td>'
             $html += '</tr>'
         }
 
