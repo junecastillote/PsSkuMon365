@@ -1,4 +1,4 @@
-Function Get-SkuMonData {
+function Get-SkuMonData {
     [CmdletBinding()]
     param (
         [Parameter(ValueFromPipeline)]
@@ -35,8 +35,14 @@ Function Get-SkuMonData {
             }
         }
 
+        $thresholdStatusCode = @{
+            Warning = 0
+            Normal  = 1
+            Ignore  = 2
+        }
+
         # JSON email address conversion
-        Function ConvertRecipientsToJSON {
+        function ConvertRecipientsToJSON {
             param(
                 [Parameter(Mandatory)]
                 [string[]]
@@ -71,14 +77,29 @@ Function Get-SkuMonData {
                 $AvailableUnits = 0
             }
 
+            $thresholdStatus = $(
+                if ($item.AlertThreshold -gt 0) {
+                    if ($AvailableUnits -le $item.AlertThreshold) {
+                        "Warning"
+                    }
+
+                    if ($AvailableUnits -gt $item.AlertThreshold) {
+                        "Normal"
+                    }
+                }
+                else {
+                    "Ignore"
+                }
+            )
+
             $null = $skuCollection.Add(
                 $(
                     New-Object psobject -Property (
                         [ordered]@{
-                            PSTypeName       = 'SkuMonData'
-                            SkuID            = $sku.SkuID
-                            SkuPartNumber    = $sku.SkuPartNumber
-                            SkuName          = $(
+                            PSTypeName          = 'SkuMonData'
+                            SkuID               = $sku.SkuID
+                            SkuPartNumber       = $sku.SkuPartNumber
+                            SkuName             = $(
                                 if (!($item.SkuName)) {
                                     $item.SkuPartNumber
                                 }
@@ -86,28 +107,16 @@ Function Get-SkuMonData {
                                     $item.SkuName
                                 }
                             )
-                            Assigned         = $sku.ConsumedUnits
-                            Total            = $sku.prepaidUnits.Enabled
-                            Suspended        = $sku.prepaidUnits.Suspended
-                            Warning          = $sku.prepaidUnits.Warning
-                            Available        = $AvailableUnits
-                            Invalid          = $ExcessUnits
-                            CapabilityStatus = $sku.CapabilityStatus
-                            AlertThreshold   = $item.AlertThreshold
-                            ThresholdStatus  = $(
-                                if ($item.AlertThreshold -gt 0) {
-                                    if ($AvailableUnits -le $item.AlertThreshold) {
-                                        "Warning"
-                                    }
-
-                                    if ($AvailableUnits -gt $item.AlertThreshold) {
-                                        "Normal"
-                                    }
-                                }
-                                else {
-                                    "Ignore"
-                                }
-                            )
+                            Assigned            = $sku.ConsumedUnits
+                            Total               = $sku.prepaidUnits.Enabled
+                            Suspended           = $sku.prepaidUnits.Suspended
+                            Warning             = $sku.prepaidUnits.Warning
+                            Available           = $AvailableUnits
+                            Invalid             = $ExcessUnits
+                            CapabilityStatus    = $sku.CapabilityStatus
+                            AlertThreshold      = $item.AlertThreshold
+                            ThresholdStatus     = $thresholdStatus
+                            ThresholdStatusCode = $thresholdStatusCode[$thresholdStatus]
                         }
                     )
                 )
