@@ -1,105 +1,105 @@
-#tbl
-{
-    font-family:"Tahoma";
+#tbl {
+    font-family: "Tahoma";
     width: auto;
-    border-collapse:collapse;
+    border-collapse: collapse;
 }
-#tbl td, #tbl th
-{
-    font-size:13px;
+
+#tbl td,
+#tbl th {
+    font-size: 13px;
     border-bottom: 1px solid #ccc;
-    padding-top:10px;
-    padding-bottom:10px;
-    padding-left:10px;
-    padding-right:10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
 
 }
-#tbl td.head
-{
-    font-size:14px;
+
+#tbl td.head {
+    font-size: 14px;
     border: none;
-    padding-top:10px;
-    padding-bottom:10px;
-    padding-left:10px;
-    padding-right:10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
-#tbl th
-{
-    font-size:14px;
-    background-color:#fff;
-    text-align:left;
-    vertical-align:top;
+
+#tbl th {
+    font-size: 14px;
+    background-color: #fff;
+    text-align: left;
+    vertical-align: top;
     color: #7a7a52;
 
 }
-#tbl th.section
-{
-    font-family:"Tahoma";
+
+#tbl th.section {
+    font-family: "Tahoma";
     font-weight: bold;
-    font-size:26px;
-    text-align:left;
-    padding-top:10px;
-    padding-bottom:10px;
-    padding-left:10px;
-    padding-right:10px;
-    background-color:#fff;
-    color:#000;
-    vertical-align:center;
+    font-size: 26px;
+    text-align: left;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    background-color: #fff;
+    color: #000;
+    vertical-align: center;
     border: none;
 }
-#tbl td
-{
-    text-align:left;
-    vertical-align:top;
+
+#tbl td {
+    text-align: left;
+    vertical-align: top;
     font-weight: lighter;
     color: #7a7a52;
 }
-#legend
-{
-    font-family:"Tahoma";
+
+#legend {
+    font-family: "Tahoma";
     width: auto;
-    border-collapse:collapse;
-    font-size:10px;
+    border-collapse: collapse;
+    font-size: 10px;
     text-align: center;
 }
-#legend td
-{
-    font-size:10px;
+
+#legend td {
+    font-size: 10px;
     border: none;
-    padding-top:5px;
-    padding-bottom:5px;
-    padding-left:5px;
-    padding-right:5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
 }
-#settings
-{
-    font-family:"Tahoma";
+
+#settings {
+    font-family: "Tahoma";
     width: auto;
-    border-collapse:collapse;
-    font-size:10px;
+    border-collapse: collapse;
+    font-size: 10px;
     text-align: left;
 }
-#settings td
-{
+
+#settings td {
     border: none;
-    padding-top:0px;
-    padding-bottom:0px;
-    padding-left:0px;
-    padding-right:0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-left: 0px;
+    padding-right: 0px;
     color: #7a7a52;
 }
-.Warning
-{
-    background-color: red;
+
+/* .Warning {
+    background-color: #C0392B;
     color: #fff;
 }
-.Normal
-{
-    background-color: green;
+
+.Normal {
+    background-color: #8A5A00;
     color: #fff;
 }
-.Ignore
-{
-    background-color: gray;
+
+.Ignore {
+    background-color: #7F8C8D;
     color: #fff;
-}
+} */
