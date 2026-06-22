@@ -4,7 +4,7 @@ Function New-SkuMonList {
 
     )
     try {
-        $subscribedSku = Get-MgSubscribedSku -ErrorAction Stop | Where-Object { $_.AppliesTo -eq 'User' }
+        $subscribedSku = Get-MgSubscribedSku -ErrorAction Stop | Where-Object { $_.AppliesTo -eq 'User' -and $_.CapabilityStatus -eq 'Enabled' }
         $skuNames = Get-SkuFriendlyName -SkuPartNumber $($subscribedSku.SkuPartNumber) | Select-Object SkuName, SkuPartNumber
         $skuNames | Add-Member -MemberType NoteProperty -Name IncludeInReport -Value $True
         $skuNames | Add-Member -MemberType NoteProperty -Name AlertThreshold -Value 0

@@ -56,7 +56,7 @@ Function Get-SkuMonData {
             $SkuMonList = New-SkuMonList
         }
 
-        $subscribedSku = Get-MgSubscribedSku -ErrorAction Stop | Where-Object { $_.AppliesTo -eq 'User' }
+        $subscribedSku = Get-MgSubscribedSku -ErrorAction Stop | Where-Object { $_.AppliesTo -eq 'User' -and $_.CapabilityStatus -eq 'Enabled' }
         [System.Collections.ArrayList]$skuCollection = @()
     }
 
