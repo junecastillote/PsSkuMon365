@@ -100,7 +100,7 @@ function ConvertTo-SkuMonHtml {
         $html += '</tr>'
 
         # Data rows
-        foreach ($item in $items | Sort-Object ThresholdStatus, Available -Descending) {
+        foreach ($item in $items | Sort-Object ThresholdStatusCode, Available) {
             $skuName = [System.Net.WebUtility]::HtmlEncode($item.SkuName)
 
             $available = '{0:N0}' -f $item.Available
