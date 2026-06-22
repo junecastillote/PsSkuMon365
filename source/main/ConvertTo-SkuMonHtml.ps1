@@ -12,7 +12,7 @@ function ConvertTo-SkuMonHtml {
         $items = [System.Collections.Generic.List[object]]::new()
         $LogoSize = 24
         $BarWidth = 100
-        $BarHeight = 8
+        $BarHeight = 10
     }
 
     process {
@@ -159,29 +159,17 @@ function ConvertTo-SkuMonHtml {
             # Avoid div/flex/percentage layouts for better Outlook compatibility.
             $barHtml = @()
             $barHtml += "<!-- Nested Table $SkuName -->"
-            $barHtml += '<table width="' + $BarWidth + '" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;table-layout:fixed;">'
+            $barHtml += '<table width="' + $BarWidth + '" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;border-spacing:0;table-layout:fixed;">'
             $barHtml += '<tr>'
 
             # Filled portion
             if ($filledWidth -gt 0) {
-                $barHtml += "<!-- Filled portion $SkuName -->"
-                $barHtml += '<td width="' + $filledWidth + '" style="width:' + $filledWidth + 'px;padding:0;" valign="middle">'
-                $barHtml += '<table width="' + $filledWidth + '" height="' + $BarHeight + '" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">'
-                $barHtml += '<tr>'
-                $barHtml += '<td bgcolor="' + $barFillColor + '" style="font-size:0;line-height:0;border-bottom:none;"></td>'
-                $barHtml += '</tr></table>'
-                $barHtml += '</td>'
+                $barHtml += '<td width="' + $filledWidth + '" style="width:' + $filledWidth + 'px;height:' + $BarHeight + 'px;background-color:' + $barFillColor + ';padding:0;font-size:0;line-height:0;border-bottom:none;"></td>'
             }
 
             # Empty portion
             if ($emptyWidth -gt 0) {
-                $barHtml += "<!-- Empty portion $SkuName -->"
-                $barHtml += '<td width="' + $emptyWidth + '" style="width:' + $emptyWidth + 'px;padding:0;" valign="middle">'
-                $barHtml += '<table width="' + $emptyWidth + '" height="' + $BarHeight + '" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">'
-                $barHtml += '<tr>'
-                $barHtml += '<td bgcolor="' + $barEmptyColor + '" style="font-size:0;line-height:0;border-bottom:none;"></td>'
-                $barHtml += '</tr></table>'
-                $barHtml += '</td>'
+                $barHtml += '<td width="' + $emptyWidth + '" style="width:' + $emptyWidth + 'px;height:' + $BarHeight + 'px;background-color:' + $barEmptyColor + ';padding:0;font-size:0;line-height:0;border-bottom:none;"></td>'
             }
 
             $barHtml += '</tr>'
