@@ -10,53 +10,45 @@ function Get-SkuMonData {
         $OutputType = 'PSObject',
 
         [parameter()]
-        [string]$From,
+        [mailaddress]$From,
 
         [parameter()]
-        [string[]]$To,
+        [mailaddress[]]$To,
 
         [parameter()]
-        [string[]]$CC,
+        [mailaddress[]]$CC,
 
         [parameter()]
-        [string[]]$BCC
+        [mailaddress[]]$BCC
     )
     begin {
+
+        if ($OutputType -in @('Html', 'Email')) {
+            SayWarning "[$($MyInvocation.MyCommand.Name)]: The -OutputType parameter is being depracated and will be removed in future versions. Use ConvertTo-SkuMonHtml to generate the HTML output."
+        }
+
         # If OutputType is Email, set the requirements.
+        $emailError = 0
         if ($OutputType -eq 'Email') {
+            SayWarning "[$($MyInvocation.MyCommand.Name)]: The -From,-TO,-CC,-BCC parameters are being depracated and will be removed in future versions. Use Send-SkuMonReport to send the report by email."
             if (!$From) {
-                Say 'The From email address is required.'
-                return $null
+                SayError "[$($MyInvocation.MyCommand.Name)]: The From email address is required."
+                $emailError++
             }
 
             if (!$To -and !$Cc -and !$Bcc) {
-                Say 'There must be at least 1 recipient email address.'
-                return $null
+                SayError "[$($MyInvocation.MyCommand.Name)]: There must be at least 1 recipient email address."
+                $emailError++
             }
         }
+
+        if ($emailError -gt 0) { continue }
 
         $thresholdStatusCode = @{
             Warning = 0
             Normal  = 1
             Ignore  = 2
         }
-
-        # JSON email address conversion
-        function ConvertRecipientsToJSON {
-            param(
-                [Parameter(Mandatory)]
-                [string[]]
-                $Recipients
-            )
-            $jsonRecipients = @()
-            $Recipients | ForEach-Object {
-                $jsonRecipients += @{EmailAddress = @{Address = $_ } }
-            }
-            return $jsonRecipients
-        }
-
-        $ThisFunction = ($MyInvocation.MyCommand)
-        $ThisModule = Get-Module ($ThisFunction.Source)
 
         if (!$SkuMonList) {
             $SkuMonList = New-SkuMonList
@@ -127,137 +119,32 @@ function Get-SkuMonData {
     end {
 
         if ($OutputType -eq 'Html' -or $OutputType -eq 'Email') {
-            $Organization = Get-MgOrganization
-            $ResourceFolder = [System.IO.Path]::Combine((Split-Path ($ThisModule.Path) -Parent), 'resource')
-            $css = Get-Content $resourceFolder\style.css -Raw
-
-            if ($PSVersionTable.PSEdition -eq 'Core') {
-                $logo = $([convert]::ToBase64String((Get-Content $resourceFolder\logo.png -AsByteStream)))
-            }
-            else {
-                $logo = $([convert]::ToBase64String((Get-Content $resourceFolder\logo.png -Raw -Encoding byte)))
-            }
-
-            $timeZoneInfo = [System.TimeZoneInfo]::Local
-            $tz = $timeZoneInfo.DisplayName.ToString().Split(" ")[0]
-
-            $today = Get-Date -Format g
-
-            $title = 'Microsoft 365 License Availability Report'
-            $html = @()
-            $html += '<html><head><title>' + $title + '</title>'
-            $html += '<style type="text/css">'
-            $html += $css
-            $html += '</style></head>'
-            $html += '<body>'
-            #table headers
-            $html += '<table id="tbl">'
-            $html += '<tr><td class="head"> </td></tr>'
-            $html += '<tr><th class="section">Microsoft 365 Licenses</th></tr>'
-            $html += '<tr><td class="head"><b>' + $($Organization.DisplayName) + '</b><br>' + $today + ' ' + $tz + '</td></tr>'
-            $html += '<tr><td class="head"> </td></tr>'
-            # $html += '<tr><td class="head"> </td></tr>'
-            $html += '</table>'
-            $html += '<tr><td class="head" colspan="4"></td></tr>'
-            $html += '</table>'
-            $html += '<table id="legend">'
-            $html += '<tr><td class="Normal" width="60px">Normal</td><td class="Warning" width="60px">Warning</td><td class="Ignore" width="60px">Ignore</td></tr>'
-            $html += '</table>'
-            $html += '<table id="tbl">'
-            $html += '<tr><td width="420px" colspan="2">Name</th><td width="170px">Quantity</td><td width="5px"></td></tr>'
-
-            foreach ($item in ($skuCollection | Sort-Object ThresholdStatus -Descending)) {
-                $html += '<tr><td><img src="data:image/png;base64,' + $logo + '"></img></td>'
-                $html += '<th>' + $item.SkuName + '</th>'
-                $html += '<td><b>' + $('{0:N0}' -f $item.Available) + ' available</b><br>' + $('{0:N0}' -f $item.Assigned) + ' assigned out of ' + $('{0:N0}' -f $item.Total) #+ ' total'
-
-                $html += '<td class="' + ($item.ThresholdStatus) + '" width="5px"></td></tr>'
-            }
-
-            $html += '<tr><td class="head" colspan="4"></td></tr>'
-            $html += '</table>'
-
-            $html += '<table id="legend">'
-            $html += '<tr><td class="Normal" width="60px">Normal</td><td class="Warning" width="60px">Warning</td><td class="Ignore" width="60px">Ignore</td></tr>'
-            $html += '</table>'
-            $html += '<table id="settings">'
-            $html += '<tr><td colspan="2"><a href="' + $ThisModule.ProjectURI + '">' + $ThisModule.Name + ' v' + $ThisModule.Version + '</a></td></tr>'
-            $html += '</table>'
-            $html += '</body>'
-            $html += '</html>'
-            $html = ($html -join "`n")
+            $html = $skuCollection | ConvertTo-SkuMonHtml
         }
 
         if ($OutputType -eq 'Html') {
-            $html
+            return $html
         }
 
         if ($OutputType -eq 'PSObject') {
-            $skuCollection
+            return $skuCollection
         }
 
         if ($OutputType -eq 'Email') {
-            $ResourceFolder = [System.IO.Path]::Combine((Split-Path ($ThisModule.Path) -Parent), 'resource')
-            $logo = $([convert]::ToBase64String([System.IO.File]::ReadAllBytes("$resourceFolder\logo.png")))
-            $Subject = "[$($Organization.DisplayName)] Microsoft 365 License Availability"
-            $mailBody = @{
-                message = @{
-                    subject                = $Subject
-                    body                   = @{
-                        content     = $($html.Replace("data:image/png;base64,$logo", "cid:logo"))
-                        contentType = "HTML"
-                    }
-                    internetMessageHeaders = @(
-                        @{
-                            name  = "X-Mailer"
-                            value = "PsGraphMail by june.castillote@gmail.com"
-                        }
-                    )
-                    attachments            = @(
-                        @{
-                            "@odata.type"  = "#microsoft.graph.fileAttachment"
-                            "contentID"    = "logo"
-                            "name"         = "logo"
-                            "IsInline"     = $true
-                            "contentType"  = "image/png"
-                            "contentBytes" = $logo
-                        }
-                    )
-                }
+            $params = @{
+                From = $From
+                Html = $html
             }
 
-            # To recipients
-            if ($To) {
-                $mailBody.message += @{
-                    toRecipients = @(
-                        $(ConvertRecipientsToJSON $To)
-                    )
-                }
-            }
-
-            # Cc recipients
-            if ($CC) {
-                $mailBody.message += @{
-                    ccRecipients = @(
-                        $(ConvertRecipientsToJSON $CC)
-                    )
-                }
-            }
-
-            # BCC recipients
-            if ($BCC) {
-                $mailBody.message += @{
-                    bccRecipients = @(
-                        $(ConvertRecipientsToJSON $BCC)
-                    )
-                }
-            }
+            if ($To.Count -gt 0) { $params.Add('To', $To) }
+            if ($Cc.Count -gt 0) { $params.Add('Cc', $CC) }
+            if ($BCC.Count -gt 0) { $params.Add('Bcc', $BCC) }
 
             try {
-                Send-MgUserMail -UserId $From -BodyParameter $mailBody
+                Send-SkuMonReport @params -ErrorAction Stop
             }
             catch {
-                SayError "Send email failed: $($_.Exception.Message)"
+                throw "Failed to send email: $($_.Exception.Message)"
             }
         }
     }
