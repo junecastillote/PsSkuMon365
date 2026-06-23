@@ -1,40 +1,90 @@
 
-Function SayError {
+function Say {
     param(
-        $Text
+        [Parameter(Mandatory, ValueFromPipeline)]
+        $Text,
+        [Parameter()]
+        $Color = 'Cyan'
     )
-    $originalForegroundColor = $Host.UI.RawUI.ForegroundColor
-    $Host.UI.RawUI.ForegroundColor = 'Red'
-    "$(Get-Date -Format 'dd-MMM-yyyy HH:mm:ss') : [ERROR] - $Text" | Out-Default
-    $Host.UI.RawUI.ForegroundColor = $originalForegroundColor
+
+    try {
+        if ($Host.UI -and $Host.UI.RawUI) {
+            $Host.UI.RawUI.ForegroundColor = $Color
+        }
+        $Text | Out-Host
+    }
+    catch {
+        # Fallback: never throw from logging
+        $Text
+    }
+    finally {
+        try { [Console]::ResetColor() } catch {}
+    }
 }
 
-Function SayInfo {
+function SayError {
     param(
-        $Text
+        [Parameter(Mandatory, ValueFromPipeline)]
+        $Text,
+        [Parameter()]
+        $Color = 'Red'
     )
-    $originalForegroundColor = $Host.UI.RawUI.ForegroundColor
-    $Host.UI.RawUI.ForegroundColor = 'Green'
-    "$(Get-Date -Format 'dd-MMM-yyyy HH:mm:ss') : [INFO] - $Text" | Out-Default
-    $Host.UI.RawUI.ForegroundColor = $originalForegroundColor
+    try {
+        if ($Host.UI -and $Host.UI.RawUI) {
+            $Host.UI.RawUI.ForegroundColor = $Color
+        }
+        "$(Get-Date -Format 'dd-MMM-yyyy HH:mm:ss') : [ERR] - $Text" | Out-Host
+    }
+    catch {
+        # Fallback: never throw from logging
+        "$(Get-Date -Format 'dd-MMM-yyyy HH:mm:ss') : [ERR] - $Text"
+    }
+    finally {
+        try { [Console]::ResetColor() } catch {}
+    }
 }
 
-Function SayWarning {
+
+function SayInfo {
     param(
-        $Text
+        [Parameter(Mandatory, ValueFromPipeline)]
+        $Text,
+        [Parameter()]
+        $Color = 'Green'
     )
-    $originalForegroundColor = $Host.UI.RawUI.ForegroundColor
-    $Host.UI.RawUI.ForegroundColor = 'Red'
-    "$(Get-Date -Format 'dd-MMM-yyyy HH:mm:ss') : [WARNING] - $Text" | Out-Default
-    $Host.UI.RawUI.ForegroundColor = $originalForegroundColor
+    try {
+        if ($Host.UI -and $Host.UI.RawUI) {
+            $Host.UI.RawUI.ForegroundColor = $Color
+        }
+        "$(Get-Date -Format 'dd-MMM-yyyy HH:mm:ss') : [INF] - $Text" | Out-Host
+    }
+    catch {
+        # Fallback: never throw from logging
+        "$(Get-Date -Format 'dd-MMM-yyyy HH:mm:ss') : [INF] - $Text"
+    }
+    finally {
+        try { [Console]::ResetColor() } catch {}
+    }
 }
 
-Function Say {
+function SayWarning {
     param(
-        $Text
+        [Parameter(Mandatory, ValueFromPipeline)]
+        $Text,
+        [Parameter()]
+        $Color = 'DarkYellow'
     )
-    $originalForegroundColor = $Host.UI.RawUI.ForegroundColor
-    $Host.UI.RawUI.ForegroundColor = 'Cyan'
-    $Text | Out-Default
-    $Host.UI.RawUI.ForegroundColor = $originalForegroundColor
+    try {
+        if ($Host.UI -and $Host.UI.RawUI) {
+            $Host.UI.RawUI.ForegroundColor = $Color
+        }
+        "$(Get-Date -Format 'dd-MMM-yyyy HH:mm:ss') : [WRN] - $Text" | Out-Host
+    }
+    catch {
+        # Fallback: never throw from logging
+        "$(Get-Date -Format 'dd-MMM-yyyy HH:mm:ss') : [WRN] - $Text"
+    }
+    finally {
+        try { [Console]::ResetColor() } catch {}
+    }
 }
