@@ -1,4 +1,4 @@
-Function New-SkuMonList {
+function New-SkuMonList {
     [CmdletBinding()]
     param (
 
@@ -12,6 +12,6 @@ Function New-SkuMonList {
         return $skuNames
     }
     catch {
-        SayError $_.Exception.Message
+        throw "Failed to get subscribed sku list. $($_.Exception.Message)"
     }
 }
