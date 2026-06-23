@@ -1,17 +1,17 @@
 function Send-SkuMonReport {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
         [string]$From,
 
-        [Parameter(Mandatory)]
-        [string[]]$To,
+        [Parameter()]
+        [mailaddress[]]$To,
 
         [Parameter()]
-        [string[]]$Cc,
+        [mailaddress[]]$Cc,
 
         [Parameter()]
-        [string[]]$Bcc,
+        [mailaddress[]]$Bcc,
 
         [Parameter(Mandatory)]
         [string]$Html,
@@ -124,12 +124,10 @@ function Send-SkuMonReport {
         $mailBody.message.bccRecipients = @(ConvertTo-GraphRecipients $Bcc)
     }
 
-    if ($PSCmdlet.ShouldProcess(($To -join ', '), "Send SKU monitoring report")) {
-        try {
-            Send-MgUserMail -UserId $From -BodyParameter $mailBody
-        }
-        catch {
-            throw "Failed to send email: $($_.Exception.Message)"
-        }
+    try {
+        Send-MgUserMail -UserId $From -BodyParameter $mailBody -ErrorAction Stop
+    }
+    catch {
+        throw "Failed to send email: $($_.Exception.Message)"
     }
 }
