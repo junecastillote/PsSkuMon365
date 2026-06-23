@@ -28,9 +28,9 @@ function Get-SkuFriendlyName {
         [System.Collections.ArrayList]$raw_Table = ([System.Net.WebClient]::new()).DownloadString($URL).split("`n")
     }
     catch {
-        SayError "There was an error getting the licensing reference table at [$URL]. Please make sure that the URL is still valid."
-        throw $_.Exception.Message
-        # return $null
+        SayError "[$($MyInvocation.MyCommand.Name)]: There was an error getting the licensing reference table at [$URL]. Please make sure that the URL is still valid."
+        SayError "[$($MyInvocation.MyCommand.Name)]: $($_.Exception.Message)"
+        return $null
     }
 
     ## Determine the starting row index of the table
