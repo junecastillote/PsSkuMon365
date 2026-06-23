@@ -1,4 +1,4 @@
-Function Get-SkuFriendlyName {
+function Get-SkuFriendlyName {
     [CmdletBinding(DefaultParameterSetName = 'All')]
     param (
         ## This is URL path to the the licensing reference table document from GitHub.
@@ -29,8 +29,8 @@ Function Get-SkuFriendlyName {
     }
     catch {
         SayError "There was an error getting the licensing reference table at [$URL]. Please make sure that the URL is still valid."
-        SayError $_.Exception.Message
-        return $null
+        throw $_.Exception.Message
+        # return $null
     }
 
     ## Determine the starting row index of the table
@@ -82,12 +82,12 @@ Function Get-SkuFriendlyName {
             }
             if (!$item) {
                 $null = $filteredResult.Add($( New-Object psobject -Property ([ordered]@{
-                            SkuName              = $null
-                            SkuPartNumber        = $sku
-                            SkuId                = $null
-                            ChildServicePlan     = $null
-                            ChildServicePlanName = $null
-                        })
+                                SkuName              = $null
+                                SkuPartNumber        = $sku
+                                SkuId                = $null
+                                ChildServicePlan     = $null
+                                ChildServicePlanName = $null
+                            })
                     ))
             }
         }
