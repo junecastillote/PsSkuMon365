@@ -10,3 +10,4 @@ names.md
 *.zip
 *.psd1.old
 *.psm1.old
+ignore/
