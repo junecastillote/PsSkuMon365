@@ -20,7 +20,13 @@ function Send-SkuMonReport {
         [string]$Subject,
 
         [Parameter()]
-        [string]$OrganizationName
+        [string]$OrganizationName,
+
+        [Parameter()]
+        [psobject[]]$CsvObject,
+
+        [Parameter()]
+        [string]$CsvString
     )
 
     # Resolve module resource folder (for logo)
@@ -75,6 +81,71 @@ function Send-SkuMonReport {
         }
     }
 
+    # CSV Attachment handling
+    $csvAttachment = $null
+    $CsvFileName = "SkuMonReport.csv"
+
+    if ($CsvObject -or $CsvString) {
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)]: Adding CSV attachment..."
+        try {
+            if ($CsvObject) {
+                # Convert object to CSV string (no type info, Outlook/Excel friendly)
+                $CsvString = $CsvObject | ConvertTo-Csv -NoTypeInformation | Out-String
+            }
+
+            # Normalize line endings (important for Excel)
+            $CsvString = $CsvString -replace "`r?`n", "`r`n"
+
+            # Encode to Base64
+            $csvBytes = [System.Text.Encoding]::UTF8.GetBytes($CsvString)
+            $csvBase64 = [convert]::ToBase64String($csvBytes)
+
+            # Build Graph attachment object
+            $csvAttachment = @{
+                "@odata.type" = "#microsoft.graph.fileAttachment"
+                name          = $CsvFileName
+                contentType   = "text/csv"
+                contentBytes  = $csvBase64
+            }
+        }
+        catch {
+            throw "Failed to build CSV attachment: $($_.Exception.Message)"
+        }
+    }
+
+    $attachments = @(
+        @{
+            "@odata.type" = "#microsoft.graph.fileAttachment"
+            name          = "normal.png"
+            contentId     = "normal"
+            isInline      = $true
+            contentType   = "image/png"
+            contentBytes  = $normalButtonBase64
+        },
+        @{
+            "@odata.type" = "#microsoft.graph.fileAttachment"
+            name          = "warning.png"
+            contentId     = "warning"
+            isInline      = $true
+            contentType   = "image/png"
+            contentBytes  = $warningButtonBase64
+        },
+        @{
+            "@odata.type" = "#microsoft.graph.fileAttachment"
+            name          = "ignore.png"
+            contentId     = "ignore"
+            isInline      = $true
+            contentType   = "image/png"
+            contentBytes  = $ignoreButtonBase64
+        }
+    )
+
+    # Write-Verbose "Hello 123"
+    # Add CSV if present
+    if ($csvAttachment) {
+        $attachments += $csvAttachment
+    }
+
     # Build message
     $mailBody = @{
         message = @{
@@ -83,32 +154,7 @@ function Send-SkuMonReport {
                 contentType = "HTML"
                 content     = $HtmlBody
             }
-            attachments = @(
-                @{
-                    "@odata.type" = "#microsoft.graph.fileAttachment"
-                    name          = "normal.png"
-                    contentId     = "normal"
-                    isInline      = $true
-                    contentType   = "image/png"
-                    contentBytes  = $normalButtonBase64
-                },
-                @{
-                    "@odata.type" = "#microsoft.graph.fileAttachment"
-                    name          = "warning.png"
-                    contentId     = "warning"
-                    isInline      = $true
-                    contentType   = "image/png"
-                    contentBytes  = $warningButtonBase64
-                },
-                @{
-                    "@odata.type" = "#microsoft.graph.fileAttachment"
-                    name          = "ignore.png"
-                    contentId     = "ignore"
-                    isInline      = $true
-                    contentType   = "image/png"
-                    contentBytes  = $ignoreButtonBase64
-                }
-            )
+            attachments = $attachments
         }
     }
 
