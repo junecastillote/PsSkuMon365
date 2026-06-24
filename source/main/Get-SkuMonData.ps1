@@ -28,21 +28,21 @@ function Get-SkuMonData {
         }
 
         # If OutputType is Email, set the requirements.
-        $emailError = 0
+        $err = 0
         if ($OutputType -eq 'Email') {
             SayWarning "[$($MyInvocation.MyCommand.Name)]: The -From,-TO,-CC,-BCC parameters are being depracated and will be removed in future versions. Use Send-SkuMonReport to send the report by email."
             if (!$From) {
                 SayError "[$($MyInvocation.MyCommand.Name)]: The From email address is required."
-                $emailError++
+                $err++
             }
 
             if (!$To -and !$Cc -and !$Bcc) {
                 SayError "[$($MyInvocation.MyCommand.Name)]: There must be at least 1 recipient email address."
-                $emailError++
+                $err++
             }
         }
 
-        if ($emailError -gt 0) { continue }
+        if ($err -gt 0) { continue }
 
         $thresholdStatusCode = @{
             Warning = 0
