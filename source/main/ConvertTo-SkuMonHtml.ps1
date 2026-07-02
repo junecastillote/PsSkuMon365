@@ -8,23 +8,81 @@ function ConvertTo-SkuMonHtml {
         [string]$ReportTitle = 'Microsoft 365 License Availability Report',
 
         [Parameter()]
-        [string]$OrganizationName,
-
-        [parameter()]
-        [bool]$ShowLegend = $true
-
+        [string]$OrganizationName
     )
 
     begin {
         $items = [System.Collections.Generic.List[object]]::new()
         $LogoSize = 24
+        $LegendLogoSize = 16
         $BarWidth = 150
         $BarHeight = 10
 
         $barColors = @{
-            'Normal'  = '#6B8F71' # Your warmer muted tone
+            'Normal'  = '#6B8F71' # Warmer muted green
             'Warning' = '#C0392B' # Red for warning
-            'Ignore'  = '#7F8C8D' # Gray for ignore
+            'Ignore'  = '#7F8C8D' # Gray for ignored SKUs
+        }
+
+        function Get-HtmlEncodedText {
+            param (
+                [AllowNull()]
+                [object]$Value
+            )
+
+            if ($null -eq $Value) {
+                return ''
+            }
+
+            return [System.Net.WebUtility]::HtmlEncode([string]$Value)
+        }
+
+        function Format-HtmlNumber {
+            param (
+                [AllowNull()]
+                [object]$Value
+            )
+
+            if ($null -eq $Value) {
+                return '0'
+            }
+
+            return '{0:N0}' -f [double]$Value
+        }
+
+        function Get-ExceptionNumberStyle {
+            param (
+                [Parameter(Mandatory)]
+                [string]$State,
+
+                [AllowNull()]
+                [object]$Value
+            )
+
+            $number = 0
+
+            if ($null -ne $Value) {
+                $number = [int]$Value
+            }
+
+            if ($number -le 0) {
+                return ''
+            }
+
+            switch ($State) {
+                'LockedOut' {
+                    return 'background-color:#FDE7E9;color:#A4262C;font-weight:bold;'
+                }
+                'Suspended' {
+                    return 'background-color:#FCE4D6;color:#A64100;font-weight:bold;'
+                }
+                'Warning' {
+                    return 'background-color:#FFF4CE;color:#8A5A00;font-weight:bold;'
+                }
+                default {
+                    return ''
+                }
+            }
         }
     }
 
@@ -39,89 +97,162 @@ function ConvertTo-SkuMonHtml {
             throw "No SkuMonData objects were provided."
         }
 
-        # Resolve resource folder
+        # Resolve resource folder.
         $module = Get-Module PsSkuMon365
+
         if (-not $module) {
             throw "Module 'PsSkuMon365' is not loaded. Unable to resolve the resource folder."
         }
 
         $ResourceFolder = Join-Path (Split-Path $module.Path -Parent) 'resource'
 
-        # Load CSS
+        # Load CSS.
         $cssPath = Join-Path $ResourceFolder 'style.css'
         $css = Get-Content $cssPath -Raw
 
-        # Load PNG as base64
+        # Load PNG images as base64.
         $normalButtonPath = Join-Path $ResourceFolder 'normal.png'
         $ignoreButtonPath = Join-Path $ResourceFolder 'ignore.png'
         $warningButtonPath = Join-Path $ResourceFolder 'warning.png'
 
-        $normalButtonBase64 = "$([convert]::ToBase64String([System.IO.File]::ReadAllBytes($normalButtonPath)))"
-        $ignoreButtonBase64 = "$([convert]::ToBase64String([System.IO.File]::ReadAllBytes($ignoreButtonPath)))"
-        $warningButtonBase64 = "$([convert]::ToBase64String([System.IO.File]::ReadAllBytes($warningButtonPath)))"
+        $normalButtonBase64 = [convert]::ToBase64String([System.IO.File]::ReadAllBytes($normalButtonPath))
+        $ignoreButtonBase64 = [convert]::ToBase64String([System.IO.File]::ReadAllBytes($ignoreButtonPath))
+        $warningButtonBase64 = [convert]::ToBase64String([System.IO.File]::ReadAllBytes($warningButtonPath))
 
-        # Organization info
+        # Organization info.
         if (-not $OrganizationName) {
             $org = Get-MgOrganization -ErrorAction Stop
-            $OrganizationName = $org.DisplayName
+            $OrganizationName = Get-HtmlEncodedText $org.DisplayName
         }
         else {
-            $OrganizationName = [System.Net.WebUtility]::HtmlEncode($OrganizationName)
+            $OrganizationName = Get-HtmlEncodedText $OrganizationName
         }
 
-        # Time info
+        # Time info.
         $tzInfo = [System.TimeZoneInfo]::Local
         $tz = ($tzInfo.DisplayName -split ' ')[0]
         $today = Get-Date -Format f
 
         $html = @()
 
-        # Header
-        $html += '<html><head><title>' + [System.Net.WebUtility]::HtmlEncode($ReportTitle) + '</title>'
+        # Header.
+        $html += '<html><head><title>' + (Get-HtmlEncodedText $ReportTitle) + '</title>'
         $html += '<style type="text/css">'
         $html += $css
         $html += '</style></head><body>'
 
-        # Title section
+        # Title section.
         $html += '<table id="tbl">'
         $html += '<tr><td class="head"></td></tr>'
-        $html += '<tr><th class="section">Microsoft 365 Licenses</th></tr>'
+        $html += '<tr><th class="section">Microsoft 365 Licenses Report</th></tr>'
         $html += '<tr><td class="head"><b>' + $OrganizationName + '</b><br>' + $today + ' ' + $tz + '</td></tr>'
-        $html += '<tr><td class="head"></td></tr>'
         $html += '</table>'
 
-        # Legend
-        if ($ShowLegend) {
-            $html += '<table id="legend">'
+        # Subscription Health exception section.
+        # This section intentionally shows only SKUs that need attention.
+        $healthItems = @(
+            $items | Where-Object {
+                ([int]$_.Warning -gt 0) -or
+                ([int]$_.Suspended -gt 0) -or
+                ([int]$_.LockedOut -gt 0)
+            } | Sort-Object `
+            @{ Expression = { [int]$_.LockedOut }; Descending = $true },
+            @{ Expression = { [int]$_.Suspended }; Descending = $true },
+            @{ Expression = { [int]$_.Warning }; Descending = $true },
+            SkuName
+        )
+
+        if ($healthItems.Count -gt 0) {
+            $html += '<table id="tbl">'
+            $html += '<tr><td class="head" colspan="6"></td></tr>'
+            $html += '<tr><th class="section" colspan="6" style="border-top: 2px solid #CCC;">Subscription Health</th></tr>'
             $html += '<tr>'
-            $html += '<td valign="middle" style="vertical-align:middle;padding:0;" width="' + $LogoSize + '"><img src="data:image/png;base64,' + $warningButtonBase64 + '" width="' + $LogoSize + '" height="' + $LogoSize + '" style="display:block;" alt="" /></td>'
-            $html += '<td style="background-color: ' + $barColors['Warning'] + '; color: #fff;" width="60px";padding:0>Warning</td>'
-            $html += '<td valign="middle" style="vertical-align:middle;padding:0;" width="' + $LogoSize + '"><img src="data:image/png;base64,' + $normalButtonBase64 + '" width="' + $LogoSize + '" height="' + $LogoSize + '" style="display:block;" alt="" /></td>'
-            $html += '<td style="background-color: ' + $barColors['Normal'] + '; color: #fff;" width="60px";padding:0>Normal</td>'
-            $html += '<td valign="middle" style="vertical-align:middle;padding:0;" width="' + $LogoSize + '"><img src="data:image/png;base64,' + $ignoreButtonBase64 + '" width="' + $LogoSize + '" height="' + $LogoSize + '" style="display:block;" alt="" /></td>'
-            $html += '<td style="background-color: ' + $barColors['Ignore'] + '; color: #fff;" width="60px";padding:0>Ignored</td>'
+            $html += '<td colspan="6" class="head">Only SKUs with Warning, Suspended, or Locked Out units are shown.</td>'
             $html += '</tr>'
+            $html += '<tr style="border-top: 2px solid #CCC;">'
+            $html += '<td>Name</td>'
+            $html += '<td>Warning</td>'
+            $html += '<td>Suspended</td>'
+            $html += '<td>Locked Out</td>'
+            $html += '</tr>'
+
+            foreach ($item in $healthItems) {
+                $skuName = Get-HtmlEncodedText $item.SkuName
+
+                $warning = Format-HtmlNumber $item.Warning
+                $suspended = Format-HtmlNumber $item.Suspended
+                $lockedOut = Format-HtmlNumber $item.LockedOut
+
+                $warningStyle = Get-ExceptionNumberStyle -State 'Warning' -Value $item.Warning
+                $suspendedStyle = Get-ExceptionNumberStyle -State 'Suspended' -Value $item.Suspended
+                $lockedOutStyle = Get-ExceptionNumberStyle -State 'LockedOut' -Value $item.LockedOut
+
+                $html += '<tr>'
+                $html += '<td valign="middle" style="vertical-align:middle;font-weight:bold;">' + $skuName + '</td>'
+                $html += '<td valign="middle" style="vertical-align:middle;text-align:right;' + $warningStyle + '">' + $warning + '</td>'
+                $html += '<td valign="middle" style="vertical-align:middle;text-align:right;' + $suspendedStyle + '">' + $suspended + '</td>'
+                $html += '<td valign="middle" style="vertical-align:middle;text-align:right;' + $lockedOutStyle + '">' + $lockedOut + '</td>'
+                $html += '</tr>'
+            }
+
+            $html += '<tr><td class="head" colspan="6"></td></tr>'
             $html += '</table>'
         }
 
-        # Table header
-        $html += '<table id="tbl">'
-        $html += '<tr><td colspan="6"></td></tr>'
+        $html += '<table id="tbl" cellpadding="0" cellspacing="0" border="0">'
         $html += '<tr>'
+
+        $html += '<th class="section" colspan="4" align="left" width="60%" valign="middle" style="vertical-align:middle;">'
+        $html += 'License Utilization'
+        $html += '</th>'
+
+        $html += '<td align="right" width="40%" valign="middle" style="vertical-align:middle;border-bottom:none;padding-top:10px;padding-bottom:10px;">'
+
+        $html += '<table id="legend" cellpadding="0" cellspacing="0" border="0" role="presentation" align="right" style="border-collapse:collapse;margin-left:auto;">'
+        $html += '<tr>'
+
+        $html += '<td valign="middle" style="vertical-align:middle;padding:0;border:1px solid #ccc;" width="' + $LegendLogoSize + '">'
+        $html += '<img src="data:image/png;base64,' + $warningButtonBase64 + '" width="' + $LegendLogoSize + '" height="' + $LegendLogoSize + '" style="display:block;border:0;" alt="" />'
+        $html += '</td>'
+        $html += '<td valign="middle" style="vertical-align:middle;background-color:' + $barColors['Warning'] + ';color:#fff;padding:2px 6px;border:1px solid #ccc;line-height:' + $LegendLogoSize + 'px;">Warning</td>'
+
+        $html += '<td valign="middle" style="vertical-align:middle;padding:0;border:1px solid #ccc;" width="' + $LegendLogoSize + '">'
+        $html += '<img src="data:image/png;base64,' + $normalButtonBase64 + '" width="' + $LegendLogoSize + '" height="' + $LegendLogoSize + '" style="display:block;border:0;" alt="" />'
+        $html += '</td>'
+        $html += '<td valign="middle" style="vertical-align:middle;background-color:' + $barColors['Normal'] + ';color:#fff;padding:2px 6px;border:1px solid #ccc;line-height:' + $LegendLogoSize + 'px;">Normal</td>'
+
+        $html += '<td valign="middle" style="vertical-align:middle;padding:0;border:1px solid #ccc;" width="' + $LegendLogoSize + '">'
+        $html += '<img src="data:image/png;base64,' + $ignoreButtonBase64 + '" width="' + $LegendLogoSize + '" height="' + $LegendLogoSize + '" style="display:block;border:0;" alt="" />'
+        $html += '</td>'
+        $html += '<td valign="middle" style="vertical-align:middle;background-color:' + $barColors['Ignore'] + ';color:#fff;padding:2px 6px;border:1px solid #ccc;line-height:' + $LegendLogoSize + 'px;">Ignored</td>'
+
+        $html += '</tr>'
+        $html += '</table>'
+
+        $html += '</td>'
+        $html += '</tr>'
+        $html += '</table>'
+
+        # Main utilization table.
+        $html += '<table id="tbl">'
+        # $html += '<tr><td colspan="4"></td></tr>'
+        $html += '<tr style="border-top: 2px solid #CCC;">'
         $html += '<td></td>'
-        $html += '<td width="420px">Name</td>'
-        $html += '<td width="120px">Available</td>'
+        # $html += '<td width="420px">Name</td>'
+        $html += '<td>Name</td>'
+        # $html += '<td width="120px">Available</td>'
+        $html += '<td>Available</td>'
         $html += '<td>&nbsp;&nbsp;Assigned / Total</td>'
         $html += '</tr>'
 
-        # Data rows
-        # `Sort-Object ThresholdStatusCode, Available` ensures that items are grouped by status and then sorted by availability within each group (e.g. warnings with lowest availability at the top of the warning section).
+        # Data rows.
+        # Sort by status first, then by available licenses so warnings with the lowest availability appear first.
         foreach ($item in $items | Sort-Object ThresholdStatusCode, Available) {
-            $skuName = [System.Net.WebUtility]::HtmlEncode($item.SkuName)
+            $skuName = Get-HtmlEncodedText $item.SkuName
 
-            $available = '{0:N0}' -f $item.Available
-            $assigned = '{0:N0}' -f $item.Assigned
-            $total = '{0:N0}' -f $item.Total
+            $available = Format-HtmlNumber $item.Available
+            $assigned = Format-HtmlNumber $item.Assigned
+            $total = Format-HtmlNumber $item.Total
 
             # Calculate assigned-license usage ratio.
             $assignedValue = 0
@@ -161,27 +292,30 @@ function ConvertTo-SkuMonHtml {
             $emptyWidth = $BarWidth - $filledWidth
 
             # Status-based color.
-            $barFillColor = $barColors[$item.ThresholdStatus]
+            $thresholdStatus = [string]$item.ThresholdStatus
 
-            if ([System.Net.WebUtility]::HtmlEncode($item.ThresholdStatus)) {
-                $barFillColor = [System.Net.WebUtility]::HtmlEncode($barFillColor)
+            if ($barColors.ContainsKey($thresholdStatus)) {
+                $barFillColor = Get-HtmlEncodedText $barColors[$thresholdStatus]
+            }
+            else {
+                $barFillColor = Get-HtmlEncodedText $barColors['Ignore']
             }
 
-            $barEmptyColor = '#D9D9D9'
+            $barEmptyColor = '#CCC'
 
             # Build Outlook-safe bar as a nested table.
             # Avoid div/flex/percentage layouts for better Outlook compatibility.
             $barHtml = @()
-            $barHtml += "<!-- Nested Table $SkuName -->"
+            $barHtml += '<!-- Nested Table ' + $skuName + ' -->'
             $barHtml += '<table width="' + $BarWidth + '" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;border-spacing:0;table-layout:fixed;">'
             $barHtml += '<tr>'
 
-            # Filled portion
+            # Filled portion.
             if ($filledWidth -gt 0) {
                 $barHtml += '<td width="' + $filledWidth + '" style="width:' + $filledWidth + 'px;height:' + $BarHeight + 'px;background-color:' + $barFillColor + ';padding:0;font-size:0;line-height:0;border-bottom:none;"></td>'
             }
 
-            # Empty portion
+            # Empty portion.
             if ($emptyWidth -gt 0) {
                 $barHtml += '<td width="' + $emptyWidth + '" style="width:' + $emptyWidth + 'px;height:' + $BarHeight + 'px;background-color:' + $barEmptyColor + ';padding:0;font-size:0;line-height:0;border-bottom:none;"></td>'
             }
@@ -194,15 +328,21 @@ function ConvertTo-SkuMonHtml {
             # Assigned cell layout:
             # Nested table keeps the bar and assigned/total text aligned in Outlook.
             $assignedCell = @()
-            $assignedCell += '<table width="190" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">'
+
+            # $assignedCell += '<table width="350" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">'
+            $assignedCell += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">'
+
             $assignedCell += '<tr>'
             $assignedCell += '<td width="' + $BarWidth + '" valign="middle" style="width:' + $BarWidth + 'px;border-bottom:none;vertical-align:middle;padding-right:0;">' + $barHtml + '</td>'
-            $assignedCell += '<td width="' + (280 - $BarWidth - 8) + '" valign="middle" style="white-space:nowrap;border-bottom:none;vertical-align:middle;">' + $assigned + ' / ' + $total + '</td>'
+
+            # $assignedCell += '<td width="' + (350 - $BarWidth - 8) + '" valign="middle" style="white-space:nowrap;border-bottom:none;vertical-align:middle;">' + $assigned + ' / ' + $total + '</td>'
+            $assignedCell += '<td valign="middle" style="white-space:nowrap;border-bottom:none;vertical-align:middle;">' + $assigned + ' / ' + $total + '</td>'
             $assignedCell += '</tr>'
             $assignedCell += '</table>'
+
             $assignedCell = $assignedCell -join ''
 
-            $statusButtonBase64 = switch ($item.ThresholdStatus) {
+            $statusButtonBase64 = switch ($thresholdStatus) {
                 'Normal' { $normalButtonBase64 }
                 'Warning' { $warningButtonBase64 }
                 'Ignore' { $ignoreButtonBase64 }
@@ -210,24 +350,24 @@ function ConvertTo-SkuMonHtml {
             }
 
             $html += '<tr>'
-            $html += '<td valign="middle" style="vertical-align:middle;padding-left:6;" width="' + $LogoSize + '"><img src="data:image/png;base64,' + $statusButtonBase64 + '" width="' + $LogoSize + '" height="' + $LogoSize + '" style="display:block;" alt="" /></td>'
-            $html += '<td valign="middle" style="vertical-align:middle;font-weight: bold;">' + $skuName + '</td>'
-            $html += '<td valign="middle" style="vertical-align:middle;">' + $available + '</td>'
+            $html += '<td valign="middle" style="vertical-align:middle;padding-left:6px;" width="' + $LogoSize + '"><img src="data:image/png;base64,' + $statusButtonBase64 + '" width="' + $LogoSize + '" height="' + $LogoSize + '" style="display:block;" alt="" /></td>'
+            $html += '<td valign="middle" style="vertical-align:middle;font-weight:bold;">' + $skuName + '</td>'
+            $html += '<td valign="middle" style="vertical-align:middle;text-align:right;">' + $available + '</td>'
             $html += '<td valign="middle">' + $assignedCell + '</td>'
             $html += '</tr>'
         }
 
-        # Footer spacer
-        $html += '<tr><td class="head" colspan="5"></td></tr>'
+        # Footer spacer for main table.
+        $html += '<tr><td class="head" colspan="4"></td></tr>'
         $html += '</table>'
 
-        # Footer info
+        # Footer info.
         $module = Get-Module PsSkuMon365
 
         if ($module) {
-            $moduleName = [System.Net.WebUtility]::HtmlEncode($module.Name)
-            $moduleVersion = [System.Net.WebUtility]::HtmlEncode($module.Version.ToString())
-            $projectUri = [System.Net.WebUtility]::HtmlEncode($module.ProjectURI)
+            $moduleName = Get-HtmlEncodedText $module.Name
+            $moduleVersion = Get-HtmlEncodedText $module.Version.ToString()
+            $projectUri = Get-HtmlEncodedText $module.ProjectURI
 
             $html += '<table id="settings">'
             $html += '<tr><td colspan="2"><a href="' + $projectUri + '">' + $moduleName + ' v' + $moduleVersion + '</a></td></tr>'
