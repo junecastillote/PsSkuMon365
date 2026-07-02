@@ -54,7 +54,8 @@ function Get-SkuMonData {
             $SkuMonList = New-SkuMonList
         }
 
-        $subscribedSku = Get-MgSubscribedSku -ErrorAction Stop | Where-Object { $_.AppliesTo -eq 'User' -and $_.CapabilityStatus -eq 'Enabled' }
+        # $subscribedSku = Get-MgSubscribedSku -ErrorAction Stop | Where-Object { $_.AppliesTo -eq 'User' -and $_.CapabilityStatus -eq 'Enabled' }
+        $subscribedSku = Get-MgSubscribedSku -ErrorAction Stop | Where-Object { $_.AppliesTo -eq 'User' }
         [System.Collections.ArrayList]$skuCollection = @()
     }
 
@@ -64,9 +65,7 @@ function Get-SkuMonData {
 
             $TotalUnits =
             $sku.PrepaidUnits.Enabled +
-            $sku.PrepaidUnits.Warning +
-            $sku.PrepaidUnits.Suspended +
-            $sku.PrepaidUnits.LockedOut
+            $sku.PrepaidUnits.Warning
 
             $AvailableUnits = ($TotalUnits - $sku.ConsumedUnits)
             $ExcessUnits = 0

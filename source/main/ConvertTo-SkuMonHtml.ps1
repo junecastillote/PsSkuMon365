@@ -164,13 +164,17 @@ function ConvertTo-SkuMonHtml {
 
         if ($healthItems.Count -gt 0) {
             $html += '<table id="tbl">'
-            $html += '<tr><td class="head" colspan="6"></td></tr>'
-            $html += '<tr><th class="section" colspan="6" style="border-top: 2px solid #CCC;">Subscription Health</th></tr>'
+            $html += '<tr><td class="head" colspan="8"></td></tr>'
+            $html += '<tr><th class="section" colspan="8" style="border-top: 2px solid #CCC;">Subscription Health</th></tr>'
             $html += '<tr>'
             $html += '<td colspan="6" class="head">Only SKUs with Warning, Suspended, or Locked Out units are shown.</td>'
             $html += '</tr>'
             $html += '<tr style="border-top: 2px solid #CCC;">'
             $html += '<td>Name</td>'
+            $html += '<td>Total Usable</td>'
+            $html += '<td>Used</td>'
+            $html += '<td>Free</td>'
+            $html += '<td>Enabled</td>'
             $html += '<td>Warning</td>'
             $html += '<td>Suspended</td>'
             $html += '<td>Locked Out</td>'
@@ -179,6 +183,10 @@ function ConvertTo-SkuMonHtml {
             foreach ($item in $healthItems) {
                 $skuName = Get-HtmlEncodedText $item.SkuName
 
+                $total = Format-HtmlNumber $item.Total
+                $assigned = Format-HtmlNumber $item.Assigned
+                $enabled = Format-HtmlNumber $item.Enabled
+                $free = Format-HtmlNumber $item.Available
                 $warning = Format-HtmlNumber $item.Warning
                 $suspended = Format-HtmlNumber $item.Suspended
                 $lockedOut = Format-HtmlNumber $item.LockedOut
@@ -189,6 +197,10 @@ function ConvertTo-SkuMonHtml {
 
                 $html += '<tr>'
                 $html += '<td valign="middle" style="vertical-align:middle;font-weight:bold;">' + $skuName + '</td>'
+                $html += '<td valign="middle" style="vertical-align:middle;text-align:right;">' + $total + '</td>'
+                $html += '<td valign="middle" style="vertical-align:middle;text-align:right;">' + $assigned + '</td>'
+                $html += '<td valign="middle" style="vertical-align:middle;text-align:right;">' + $free + '</td>'
+                $html += '<td valign="middle" style="vertical-align:middle;text-align:right;">' + $enabled + '</td>'
                 $html += '<td valign="middle" style="vertical-align:middle;text-align:right;' + $warningStyle + '">' + $warning + '</td>'
                 $html += '<td valign="middle" style="vertical-align:middle;text-align:right;' + $suspendedStyle + '">' + $suspended + '</td>'
                 $html += '<td valign="middle" style="vertical-align:middle;text-align:right;' + $lockedOutStyle + '">' + $lockedOut + '</td>'
