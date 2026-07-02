@@ -62,7 +62,13 @@ function Get-SkuMonData {
         foreach ($item in $SkuMonList | Where-Object { $_.IncludeInReport -eq $true }) {
             $sku = $subscribedSku | Where-Object { $_.SkuPartNumber -eq $item.SkuPartNumber }
 
-            $AvailableUnits = (($sku.prepaidUnits.Enabled + $sku.prepaidUnits.Warning) - $sku.ConsumedUnits)
+            $TotalUnits =
+            $sku.PrepaidUnits.Enabled +
+            $sku.PrepaidUnits.Warning +
+            $sku.PrepaidUnits.Suspended +
+            $sku.PrepaidUnits.LockedOut
+
+            $AvailableUnits = ($TotalUnits - $sku.ConsumedUnits)
             $ExcessUnits = 0
             if ($AvailableUnits -lt 0) {
                 $ExcessUnits = [Math]::Abs($AvailableUnits)
@@ -100,8 +106,10 @@ function Get-SkuMonData {
                                 }
                             )
                             Assigned            = $sku.ConsumedUnits
-                            Total               = $sku.prepaidUnits.Enabled
+                            Total               = $TotalUnits
+                            Enabled             = $sku.prepaidUnits.Enabled
                             Suspended           = $sku.prepaidUnits.Suspended
+                            LockedOut           = $sku.PrepaidUnits.LockedOut
                             Warning             = $sku.prepaidUnits.Warning
                             Available           = $AvailableUnits
                             Invalid             = $ExcessUnits
