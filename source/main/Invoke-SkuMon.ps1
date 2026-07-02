@@ -12,7 +12,6 @@ function Invoke-SkuMon {
         # HTML options
         [string]$ReportTitle = 'Microsoft 365 License Availability Report',
         [string]$OrganizationName,
-        [bool]$ShowLegend = $true,
 
         # Email options
         [mailaddress]$From,
@@ -70,8 +69,7 @@ function Invoke-SkuMon {
         Write-Verbose "[$($MyInvocation.MyCommand.Name)]: Converting data to HTML..."
         $html = $data | ConvertTo-SkuMonHtml `
             -ReportTitle $ReportTitle `
-            -OrganizationName $OrganizationName `
-            -ShowLegend $ShowLegend
+            -OrganizationName $OrganizationName
 
         if ($Mode -eq 'Html') {
             return $html
