@@ -21,7 +21,8 @@ function ConvertTo-SkuMonHtml {
         $barColors = @{
             'Normal'  = '#6B8F71' # Warmer muted green
             'Warning' = '#C0392B' # Red for warning
-            'Ignore'  = '#7F8C8D' # Gray for ignored SKUs
+            # 'Ignore'  = '#7F8C8D' # Gray for ignored SKUs
+            'Ignore'  = '#9373C0' # Gray for ignored SKUs
         }
 
         function Get-HtmlEncodedText {
@@ -236,7 +237,7 @@ function ConvertTo-SkuMonHtml {
         $html += '<td valign="middle" style="vertical-align:middle;padding:0;border:1px solid #ccc;" width="' + $LegendLogoSize + '">'
         $html += '<img src="data:image/png;base64,' + $ignoreButtonBase64 + '" width="' + $LegendLogoSize + '" height="' + $LegendLogoSize + '" style="display:block;border:0;" alt="" />'
         $html += '</td>'
-        $html += '<td valign="middle" style="vertical-align:middle;background-color:' + $barColors['Ignore'] + ';color:#fff;padding:2px 6px;border:1px solid #ccc;line-height:' + $LegendLogoSize + 'px;">Ignored</td>'
+        $html += '<td valign="middle" style="vertical-align:middle;background-color:' + $barColors['Ignore'] + ';color:#fff;padding:2px 6px;border:1px solid #ccc;line-height:' + $LegendLogoSize + 'px;">No threshold</td>'
 
         $html += '</tr>'
         $html += '</table>'
@@ -313,7 +314,8 @@ function ConvertTo-SkuMonHtml {
                 $barFillColor = Get-HtmlEncodedText $barColors['Ignore']
             }
 
-            $barEmptyColor = '#CCC'
+            # $barEmptyColor = '#CCC'
+            $barEmptyColor = '#424242'
 
             # Build Outlook-safe bar as a nested table.
             # Avoid div/flex/percentage layouts for better Outlook compatibility.
