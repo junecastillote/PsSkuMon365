@@ -168,7 +168,8 @@ function ConvertTo-SkuMonHtml {
             $html += '<tr><td class="head" colspan="8"></td></tr>'
             $html += '<tr><th class="section" colspan="8" style="border-top: 2px solid #CCC;">Subscription Health</th></tr>'
             $html += '<tr>'
-            $html += '<td colspan="6" class="head">Only SKUs with Warning, Suspended, or Locked Out units are shown.</td>'
+            # $html += '<td colspan="6" class="head">Only SKUs with Warning, Suspended, or Locked Out units are shown.</td>'
+            $html += '<td colspan="6" class="head">Only SKUs with <a href="https://learn.microsoft.com/en-us/graph/api/resources/licenseunitsdetail?view=graph-rest-1.0" target="_blank" rel="noopener noreferrer">Warning, Suspended, or Locked Out</a> units are shown.</td>'
             $html += '</tr>'
             $html += '<tr style="border-top: 2px solid #CCC;">'
             $html += '<td>Name</td>'
@@ -370,7 +371,7 @@ function ConvertTo-SkuMonHtml {
             $projectUri = Get-HtmlEncodedText $module.ProjectURI
 
             $html += '<table id="settings">'
-            $html += '<tr><td colspan="2"><a href="' + $projectUri + '">' + $moduleName + ' v' + $moduleVersion + '</a></td></tr>'
+            $html += '<tr><td colspan="2"><a href="' + $projectUri + '" target="_blank" rel="noopener noreferrer">' + $moduleName + ' v' + $moduleVersion + '</a></td></tr>'
             $html += '</table>'
         }
 
