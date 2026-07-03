@@ -244,7 +244,7 @@ function ConvertTo-SkuMonHtml {
 
         # Data rows.
         # Sort by status first, then by free licenses so warnings with the lowest availability appear first.
-        foreach ($item in $items | Where-Object { $_.ShowInReport -eq $true } | Sort-Object ThresholdStatusCode, Free ) {
+        foreach ($item in $items | Where-Object { $_.ShowInReport -eq $true } | Sort-Object ThresholdStatusCode, Available ) {
             $skuName = Get-HtmlEncodedText $item.SkuName
 
             $free = Format-HtmlNumber $item.Available
