@@ -172,10 +172,10 @@ function ConvertTo-SkuMonHtml {
             $html += '</tr>'
             $html += '<tr style="border-top: 2px solid #CCC;">'
             $html += '<td>Name</td>'
-            $html += '<td>Total Usable</td>'
-            $html += '<td>Used</td>'
-            $html += '<td>Free</td>'
-            $html += '<td>Enabled</td>'
+            # $html += '<td>Total Usable</td>'
+            # $html += '<td>Used</td>'
+            # $html += '<td>Free</td>'
+            # $html += '<td>Enabled</td>'
             $html += '<td>Warning</td>'
             $html += '<td>Suspended</td>'
             $html += '<td>Locked Out</td>'
@@ -184,10 +184,8 @@ function ConvertTo-SkuMonHtml {
             foreach ($item in $healthItems) {
                 $skuName = Get-HtmlEncodedText $item.SkuName
 
-                $total = Format-HtmlNumber $item.Total
-                $assigned = Format-HtmlNumber $item.Assigned
-                $enabled = Format-HtmlNumber $item.Enabled
-                $free = Format-HtmlNumber $item.Available
+                $totalUsable = Format-HtmlNumber $item.TotalUsable
+                $used = Format-HtmlNumber $item.Used
                 $warning = Format-HtmlNumber $item.Warning
                 $suspended = Format-HtmlNumber $item.Suspended
                 $lockedOut = Format-HtmlNumber $item.LockedOut
@@ -198,10 +196,6 @@ function ConvertTo-SkuMonHtml {
 
                 $html += '<tr>'
                 $html += '<td valign="middle" style="vertical-align:middle;font-weight:bold;">' + $skuName + '</td>'
-                $html += '<td valign="middle" style="vertical-align:middle;text-align:right;">' + $total + '</td>'
-                $html += '<td valign="middle" style="vertical-align:middle;text-align:right;">' + $assigned + '</td>'
-                $html += '<td valign="middle" style="vertical-align:middle;text-align:right;">' + $free + '</td>'
-                $html += '<td valign="middle" style="vertical-align:middle;text-align:right;">' + $enabled + '</td>'
                 $html += '<td valign="middle" style="vertical-align:middle;text-align:right;' + $warningStyle + '">' + $warning + '</td>'
                 $html += '<td valign="middle" style="vertical-align:middle;text-align:right;' + $suspendedStyle + '">' + $suspended + '</td>'
                 $html += '<td valign="middle" style="vertical-align:middle;text-align:right;' + $lockedOutStyle + '">' + $lockedOut + '</td>'
@@ -215,11 +209,11 @@ function ConvertTo-SkuMonHtml {
         $html += '<table id="tbl" cellpadding="0" cellspacing="0" border="0">'
         $html += '<tr>'
 
-        $html += '<th class="section" colspan="4" align="left" width="60%" valign="middle" style="vertical-align:middle;">'
+        $html += '<th class="section" colspan="2" align="left" valign="middle" style="vertical-align:middle;border-top: 2px solid #CCC;">'
         $html += 'License Utilization'
         $html += '</th>'
 
-        $html += '<td align="right" width="40%" valign="middle" style="vertical-align:middle;border-bottom:none;padding-top:10px;padding-bottom:10px;">'
+        $html += '<td align="right" valign="middle" colspan="2" style="vertical-align:middle;border-bottom:none;padding-top:10px;padding-bottom:10px;border-top: 2px solid #CCC;">'
 
         $html += '<table id="legend" cellpadding="0" cellspacing="0" border="0" role="presentation" align="right" style="border-collapse:collapse;margin-left:auto;">'
         $html += '<tr>'
@@ -227,60 +221,54 @@ function ConvertTo-SkuMonHtml {
         $html += '<td valign="middle" style="vertical-align:middle;padding:0;border:1px solid #ccc;" width="' + $LegendLogoSize + '">'
         $html += '<img src="data:image/png;base64,' + $warningButtonBase64 + '" width="' + $LegendLogoSize + '" height="' + $LegendLogoSize + '" style="display:block;border:0;" alt="" />'
         $html += '</td>'
-        $html += '<td valign="middle" style="vertical-align:middle;background-color:' + $barColors['Warning'] + ';color:#fff;padding:2px 6px;border:1px solid #ccc;line-height:' + $LegendLogoSize + 'px;">Warning</td>'
+        $html += '<td valign="middle" style="vertical-align:middle;background-color:' + $barColors['Warning'] + ';color:#fff;padding:2px 6px;border:1px solid #ccc;line-height:' + $LegendLogoSize + 'px;">Below free threshold</td>'
 
         $html += '<td valign="middle" style="vertical-align:middle;padding:0;border:1px solid #ccc;" width="' + $LegendLogoSize + '">'
         $html += '<img src="data:image/png;base64,' + $normalButtonBase64 + '" width="' + $LegendLogoSize + '" height="' + $LegendLogoSize + '" style="display:block;border:0;" alt="" />'
         $html += '</td>'
-        $html += '<td valign="middle" style="vertical-align:middle;background-color:' + $barColors['Normal'] + ';color:#fff;padding:2px 6px;border:1px solid #ccc;line-height:' + $LegendLogoSize + 'px;">Normal</td>'
+        $html += '<td valign="middle" style="vertical-align:middle;background-color:' + $barColors['Normal'] + ';color:#fff;padding:2px 6px;border:1px solid #ccc;line-height:' + $LegendLogoSize + 'px;">Above free threshold</td>'
 
         $html += '<td valign="middle" style="vertical-align:middle;padding:0;border:1px solid #ccc;" width="' + $LegendLogoSize + '">'
         $html += '<img src="data:image/png;base64,' + $ignoreButtonBase64 + '" width="' + $LegendLogoSize + '" height="' + $LegendLogoSize + '" style="display:block;border:0;" alt="" />'
         $html += '</td>'
-        $html += '<td valign="middle" style="vertical-align:middle;background-color:' + $barColors['Ignore'] + ';color:#fff;padding:2px 6px;border:1px solid #ccc;line-height:' + $LegendLogoSize + 'px;">No threshold</td>'
+        $html += '<td valign="middle" style="vertical-align:middle;background-color:' + $barColors['Ignore'] + ';color:#fff;padding:2px 6px;border:1px solid #ccc;line-height:' + $LegendLogoSize + 'px;">No threshold set</td>'
 
         $html += '</tr>'
         $html += '</table>'
 
         $html += '</td>'
         $html += '</tr>'
-        $html += '</table>'
 
         # Main utilization table.
-        $html += '<table id="tbl">'
-        # $html += '<tr><td colspan="4"></td></tr>'
         $html += '<tr style="border-top: 2px solid #CCC;">'
-        $html += '<td></td>'
-        # $html += '<td width="420px">Name</td>'
-        $html += '<td>Name</td>'
-        # $html += '<td width="120px">Available</td>'
-        $html += '<td>Available</td>'
-        $html += '<td>&nbsp;&nbsp;Assigned / Total</td>'
+        $html += '<td colspan="2">Name</td>'
+        $html += '<td>Free</td>'
+        $html += '<td>&nbsp;&nbsp;Used / Total</td>'
         $html += '</tr>'
 
         # Data rows.
-        # Sort by status first, then by available licenses so warnings with the lowest availability appear first.
-        foreach ($item in $items | Sort-Object ThresholdStatusCode, Available) {
+        # Sort by status first, then by free licenses so warnings with the lowest availability appear first.
+        foreach ($item in $items | Where-Object { $_.ShowInReport -eq $true } | Sort-Object ThresholdStatusCode, Free ) {
             $skuName = Get-HtmlEncodedText $item.SkuName
 
-            $available = Format-HtmlNumber $item.Available
-            $assigned = Format-HtmlNumber $item.Assigned
-            $total = Format-HtmlNumber $item.Total
+            $free = Format-HtmlNumber $item.Free
+            $used = Format-HtmlNumber $item.Used
+            $totalUsable = Format-HtmlNumber $item.TotalUsable
 
-            # Calculate assigned-license usage ratio.
-            $assignedValue = 0
+            # Calculate used-license usage ratio.
+            $usedVale = 0
             $totalValue = 0
 
-            if ($null -ne $item.Assigned) {
-                $assignedValue = [double]$item.Assigned
+            if ($null -ne $item.Used) {
+                $usedVale = [double]$item.Used
             }
 
-            if ($null -ne $item.Total) {
-                $totalValue = [double]$item.Total
+            if ($null -ne $item.TotalUsable) {
+                $totalValue = [double]$item.TotalUsable
             }
 
             $usedRatio = if ($totalValue -gt 0) {
-                $assignedValue / $totalValue
+                $usedVale / $totalValue
             }
             else {
                 0
@@ -298,7 +286,7 @@ function ConvertTo-SkuMonHtml {
             $filledWidth = [int][Math]::Round(($usedRatio * $BarWidth), 0)
 
             # Show a thin visible marker for very small non-zero usage.
-            if (($assignedValue -gt 0) -and ($filledWidth -lt 1)) {
+            if (($usedVale -gt 0) -and ($filledWidth -lt 1)) {
                 $filledWidth = 1
             }
 
@@ -339,22 +327,20 @@ function ConvertTo-SkuMonHtml {
 
             $barHtml = $barHtml -join ''
 
-            # Assigned cell layout:
-            # Nested table keeps the bar and assigned/total text aligned in Outlook.
-            $assignedCell = @()
+            # Used cell layout:
+            # Nested table keeps the bar and used/total text aligned in Outlook.
+            $usedCell = @()
 
-            # $assignedCell += '<table width="350" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">'
-            $assignedCell += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">'
+            $usedCell += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">'
 
-            $assignedCell += '<tr>'
-            $assignedCell += '<td width="' + $BarWidth + '" valign="middle" style="width:' + $BarWidth + 'px;border-bottom:none;vertical-align:middle;padding-right:0;">' + $barHtml + '</td>'
+            $usedCell += '<tr>'
+            $usedCell += '<td width="' + $BarWidth + '" valign="middle" style="width:' + $BarWidth + 'px;border-bottom:none;vertical-align:middle;padding-right:0;">' + $barHtml + '</td>'
 
-            # $assignedCell += '<td width="' + (350 - $BarWidth - 8) + '" valign="middle" style="white-space:nowrap;border-bottom:none;vertical-align:middle;">' + $assigned + ' / ' + $total + '</td>'
-            $assignedCell += '<td valign="middle" style="white-space:nowrap;border-bottom:none;vertical-align:middle;">' + $assigned + ' / ' + $total + '</td>'
-            $assignedCell += '</tr>'
-            $assignedCell += '</table>'
+            $usedCell += '<td valign="middle" style="white-space:nowrap;border-bottom:none;vertical-align:middle;">' + $used + ' / ' + $totalUsable + '</td>'
+            $usedCell += '</tr>'
+            $usedCell += '</table>'
 
-            $assignedCell = $assignedCell -join ''
+            $usedCell = $usedCell -join ''
 
             $statusButtonBase64 = switch ($thresholdStatus) {
                 'Normal' { $normalButtonBase64 }
@@ -366,8 +352,8 @@ function ConvertTo-SkuMonHtml {
             $html += '<tr>'
             $html += '<td valign="middle" style="vertical-align:middle;padding-left:6px;" width="' + $LogoSize + '"><img src="data:image/png;base64,' + $statusButtonBase64 + '" width="' + $LogoSize + '" height="' + $LogoSize + '" style="display:block;" alt="" /></td>'
             $html += '<td valign="middle" style="vertical-align:middle;font-weight:bold;">' + $skuName + '</td>'
-            $html += '<td valign="middle" style="vertical-align:middle;text-align:right;">' + $available + '</td>'
-            $html += '<td valign="middle">' + $assignedCell + '</td>'
+            $html += '<td valign="middle" style="vertical-align:middle;text-align:right;">' + $free + '</td>'
+            $html += '<td valign="middle">' + $usedCell + '</td>'
             $html += '</tr>'
         }
 
