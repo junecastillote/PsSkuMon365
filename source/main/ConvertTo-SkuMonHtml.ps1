@@ -21,7 +21,6 @@ function ConvertTo-SkuMonHtml {
         $barColors = @{
             'Normal'  = '#6B8F71' # Warmer muted green
             'Warning' = '#C0392B' # Red for warning
-            # 'Ignore'  = '#7F8C8D' # Gray for ignored SKUs
             'Ignore'  = '#9373C0' # Gray for ignored SKUs
         }
 
@@ -166,17 +165,12 @@ function ConvertTo-SkuMonHtml {
         if ($healthItems.Count -gt 0) {
             $html += '<table id="tbl">'
             $html += '<tr><td class="head" colspan="8"></td></tr>'
-            $html += '<tr><th class="section" colspan="8" style="border-top: 2px solid #CCC;">Subscription Health</th></tr>'
+            $html += '<tr><th class="section" colspan="8" >Subscription Health</th></tr>'
             $html += '<tr>'
-            # $html += '<td colspan="6" class="head">Only SKUs with Warning, Suspended, or Locked Out units are shown.</td>'
-            $html += '<td colspan="6" class="head">Only SKUs with <a href="https://learn.microsoft.com/en-us/graph/api/resources/licenseunitsdetail?view=graph-rest-1.0" target="_blank" rel="noopener noreferrer">Warning, Suspended, or Locked Out</a> units are shown.</td>'
+            $html += '<td colspan="6" class="head" style="border-bottom: 2px solid #CCC;">Only SKUs with <a href="https://learn.microsoft.com/en-us/graph/api/resources/licenseunitsdetail?view=graph-rest-1.0" target="_blank" rel="noopener noreferrer">Warning, Suspended, or Locked Out</a> units are shown.</td>'
             $html += '</tr>'
-            $html += '<tr style="border-top: 2px solid #CCC;">'
+            $html += '<tr>'
             $html += '<td>Name</td>'
-            # $html += '<td>Total Usable</td>'
-            # $html += '<td>Used</td>'
-            # $html += '<td>Free</td>'
-            # $html += '<td>Enabled</td>'
             $html += '<td>Warning</td>'
             $html += '<td>Suspended</td>'
             $html += '<td>Locked Out</td>'
@@ -210,11 +204,11 @@ function ConvertTo-SkuMonHtml {
         $html += '<table id="tbl" cellpadding="0" cellspacing="0" border="0">'
         $html += '<tr>'
 
-        $html += '<th class="section" colspan="2" align="left" valign="middle" style="vertical-align:middle;border-top: 2px solid #CCC;">'
+        $html += '<th class="section" colspan="2" align="left" valign="middle" style="vertical-align:middle;border-bottom: 2px solid #CCC;">'
         $html += 'License Utilization'
         $html += '</th>'
 
-        $html += '<td align="right" valign="middle" colspan="2" style="vertical-align:middle;border-bottom:none;padding-top:10px;padding-bottom:10px;border-top: 2px solid #CCC;">'
+        $html += '<td align="right" valign="middle" colspan="2" style="vertical-align:middle;border-bottom:none;padding-top:10px;padding-bottom:10px;border-bottom: 2px solid #CCC;">'
 
         $html += '<table id="legend" cellpadding="0" cellspacing="0" border="0" role="presentation" align="right" style="border-collapse:collapse;margin-left:auto;">'
         $html += '<tr>'
@@ -241,7 +235,8 @@ function ConvertTo-SkuMonHtml {
         $html += '</tr>'
 
         # Main utilization table.
-        $html += '<tr style="border-top: 2px solid #CCC;">'
+        # $html += '<tr style="border-top: 2px solid #CCC;">'
+        $html += '<tr>'
         $html += '<td colspan="2">Name</td>'
         $html += '<td>Free</td>'
         $html += '<td>&nbsp;&nbsp;Used / Total</td>'
