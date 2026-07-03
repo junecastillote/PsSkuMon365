@@ -60,7 +60,8 @@ function Get-SkuMonData {
     }
 
     process {
-        foreach ($item in $SkuMonList | Where-Object { $_.IncludeInReport -eq $true }) {
+        # foreach ($item in $SkuMonList | Where-Object { $_.IncludeInReport -eq $true }) {
+        foreach ($item in $SkuMonList) {
             $sku = $subscribedSku | Where-Object { $_.SkuPartNumber -eq $item.SkuPartNumber }
 
             $TotalUnits =
@@ -116,6 +117,7 @@ function Get-SkuMonData {
                             AlertThreshold      = $item.AlertThreshold
                             ThresholdStatus     = $thresholdStatus
                             ThresholdStatusCode = $thresholdStatusCode[$thresholdStatus]
+                            ShowInReport        = $item.IncludeInReport
                         }
                     )
                 )
