@@ -105,8 +105,8 @@ function Get-SkuMonData {
                                     $item.SkuName
                                 }
                             )
-                            Used                = $sku.ConsumedUnits
-                            TotalUsable         = $TotalUsable
+                            Assigned                = $sku.ConsumedUnits
+                            Total               = $TotalUsable
                             Enabled             = $sku.prepaidUnits.Enabled
                             Suspended           = $sku.prepaidUnits.Suspended
                             LockedOut           = $sku.PrepaidUnits.LockedOut

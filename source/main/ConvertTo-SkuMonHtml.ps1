@@ -185,8 +185,8 @@ function ConvertTo-SkuMonHtml {
             foreach ($item in $healthItems) {
                 $skuName = Get-HtmlEncodedText $item.SkuName
 
-                $totalUsable = Format-HtmlNumber $item.TotalUsable
-                $used = Format-HtmlNumber $item.Used
+                $totalUsable = Format-HtmlNumber $item.Total
+                $used = Format-HtmlNumber $item.Assigned
                 $warning = Format-HtmlNumber $item.Warning
                 $suspended = Format-HtmlNumber $item.Suspended
                 $lockedOut = Format-HtmlNumber $item.LockedOut
@@ -252,20 +252,20 @@ function ConvertTo-SkuMonHtml {
         foreach ($item in $items | Where-Object { $_.ShowInReport -eq $true } | Sort-Object ThresholdStatusCode, Free ) {
             $skuName = Get-HtmlEncodedText $item.SkuName
 
-            $free = Format-HtmlNumber $item.Free
-            $used = Format-HtmlNumber $item.Used
-            $totalUsable = Format-HtmlNumber $item.TotalUsable
+            $free = Format-HtmlNumber $item.Available
+            $used = Format-HtmlNumber $item.Assigned
+            $totalUsable = Format-HtmlNumber $item.Total
 
             # Calculate used-license usage ratio.
             $usedVale = 0
             $totalValue = 0
 
-            if ($null -ne $item.Used) {
-                $usedVale = [double]$item.Used
+            if ($null -ne $item.Assigned) {
+                $usedVale = [double]$item.Assigned
             }
 
-            if ($null -ne $item.TotalUsable) {
-                $totalValue = [double]$item.TotalUsable
+            if ($null -ne $item.Total) {
+                $totalValue = [double]$item.Total
             }
 
             $usedRatio = if ($totalValue -gt 0) {
